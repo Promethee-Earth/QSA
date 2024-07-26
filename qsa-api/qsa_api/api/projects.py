@@ -1,5 +1,5 @@
 # coding: utf8
-
+import sys
 import shutil
 import requests
 from jsonschema import validate
@@ -10,6 +10,9 @@ from qgis.PyQt.QtCore import QDateTime
 
 from ..wms import WMS
 from ..project import QSAProject
+from ..project import logger
+
+import json
 
 
 projects = Blueprint("projects", __name__)
@@ -17,22 +20,35 @@ projects = Blueprint("projects", __name__)
 
 @projects.get("/")
 def projects_list():
-    psql_schema = request.args.get("schema", default="public")
+    try:
+        logger().info("")
+        psql_schema = request.args.get("schema", default="public")
 
-    p = []
-    for project in QSAProject.projects(psql_schema):
-        p.append(project.name)
-    return jsonify(p)
+        p = []
+        for project in QSAProject.projects(psql_schema):
+            p.append(project.name)
+        logger().info(jsonify(p))
+        return jsonify(p)
+
+    except Exception as e:
+        logger().exception(str(e))
+        return {"error": "Could not get project list"}, 415
 
 
 @projects.get("/<name>")
 def project_info(name: str):
-    psql_schema = request.args.get("schema", default="public")
-    project = QSAProject(name, psql_schema)
+    try:
+        logger().info(name)
+        psql_schema = request.args.get("schema", default="public")
+        project = QSAProject(name, psql_schema)
 
-    if project.exists():
+        if not project.exists():
+            raise Exception("Project does not exist")
+        logger().info(jsonify(project.metadata))    
         return jsonify(project.metadata)
-    return {"error": "Project does not exist"}, 415
+    except Exception as e:
+        logger().exception(str(e))
+        return {"error": str(e)}, 415
 
 
 @projects.post("/")
@@ -46,63 +62,79 @@ def project_add():
             "schema": {"type": "string"},
         },
     }
-
-    if request.is_json:
-        data = request.get_json()
-        try:
+    try:
+        logger().info(request.get_json())
+        if request.is_json:
+            data = request.get_json()
             validate(data, schema)
-        except ValidationError as e:
-            return {"error": e.message}, 415
 
-        name = data["name"]
-        author = data["author"]
-        schema = ""
-        if "schema" in data:
-            schema = data["schema"]
+            name = data["name"]
+            author = data["author"]
+            schema = ""
+            if "schema" in data:
+                schema = data["schema"]
 
-        project = QSAProject(name, schema)
-        if project.exists():
-            return {"error": "Project already exists"}
-        rc, err = project.create(author)
-        if not rc:
-            return {"error": err}, 415
-        return jsonify(True), 201
-    return {"error": "Request must be JSON"}, 415
+            project = QSAProject(name, schema)
+            if project.exists():
+                raise Exception("Project already exists")
+            rc, err = project.create(author)
+            if not rc:
+                raise Exception(err)
+            logger().info(rc)
+            return jsonify(True), 201
+        raise Exception("Request must be JSON")
+    except Exception as e:
+        logger().exception(str(e))
+        return {"error": str(e)}, 415
 
 
 @projects.delete("/<name>")
 def project_del(name):
-    psql_schema = request.args.get("schema", default="public")
-    project = QSAProject(name, psql_schema)
+    try:
+        logger().info(name)
+        psql_schema = request.args.get("schema", default="public")
+        project = QSAProject(name, psql_schema)
 
-    if project.exists():
+        if not project.exists():
+            raise Exception("Project does not exist")
         project.remove()
-        return jsonify(True), 201
-    return {"error": "Project does not exist"}, 415
+        logger.info(jsonify(True))
+        return jsonify(True), 201    
+    except Exception as e:
+        logger().exception(str(e))
+        return {"error": str(e)}, 415
 
 
 @projects.get("/<name>/styles")
 def project_styles(name):
-    psql_schema = request.args.get("schema", default="public")
-    project = QSAProject(name, psql_schema)
-    if project.exists():
+    try:
+        logger().info(name)
+        psql_schema = request.args.get("schema", default="public")
+        project = QSAProject(name, psql_schema)
+        if not project.exists():
+            raise Exception("Project does not exist")
+        logger().info(jsonify(project.styles))
         return jsonify(project.styles), 201
-    else:
-        return {"error": "Project does not exist"}, 415
-
+    except Exception as e:
+        logger().exception(str(e))
+        return {"error": str(e)}, 415
 
 @projects.get("/<name>/styles/<style>")
 def project_style(name, style):
-    psql_schema = request.args.get("schema", default="public")
-    project = QSAProject(name, psql_schema)
-    if project.exists():
+    try:
+        logger().info(jsonify(name=name, style=style))
+        psql_schema = request.args.get("schema", default="public")
+        project = QSAProject(name, psql_schema)
+        if not project.exists():
+            raise Exception("Project does not exist")
         infos, err = project.style(style)
         if err:
-            return {"error": err}, 415
-        else:
-            return jsonify(infos), 201
-    else:
-        return {"error": "Project does not exist"}, 415
+            raise Exception(err)
+        logger().info(jsonify(infos))
+        return jsonify(infos), 201
+    except Exception as e:
+        logger().exception(str(e))
+        return {"error": str(e)}, 415
 
 
 @projects.delete("/<name>/styles/<style>")
@@ -131,24 +163,23 @@ def project_layer_update_style(name, layer_name):
             "current": {"type": "boolean"},
         },
     }
-
-    psql_schema = request.args.get("schema", default="public")
-    project = QSAProject(name, psql_schema)
-    if project.exists():
+    try:
+        psql_schema = request.args.get("schema", default="public")
+        project = QSAProject(name, psql_schema)
+        if not project.exists():
+            raise Exception("Project does not exist")
         data = request.get_json()
-        try:
-            validate(data, schema)
-        except ValidationError as e:
-            return {"error": e.message}, 415
+        
+        validate(data, schema)
 
         current = data["current"]
         style_name = data["name"]
         rc, msg = project.layer_update_style(layer_name, style_name, current)
         if not rc:
-            return {"error": msg}, 415
+            raise Exception(msg)
         return jsonify(True), 201
-    else:
-        return {"error": "Project does not exist"}, 415
+    except Exception as e:
+        return {"error": str(e)}, 415
 
 
 @projects.get("/<name>/layers/<layer_name>/map/url")
@@ -191,28 +222,29 @@ def project_add_style(name):
             "rendering": {"type": "object"},
         },
     }
-
-    psql_schema = request.args.get("schema", default="public")
-    project = QSAProject(name, psql_schema)
-    if project.exists():
+    try:
+        logger().info(request.get_json)
+        psql_schema = request.args.get("schema", default="public")
+        project = QSAProject(name, psql_schema)
+        if not project.exists():
+            raise Exception("Project does not exist")
         data = request.get_json()
-        try:
-            validate(data, schema)
-        except ValidationError as e:
-            return {"error": e.message}, 415
-
+        
+        validate(data, schema)
+        
         rc, err = project.add_style(
             data["name"],
             data["type"],
             data["symbology"],
             data["rendering"],
         )
-        if rc:
-            return jsonify(rc), 201
-        else:
-            return {"error": err}, 415
-    else:
-        return {"error": "Project does not exist"}, 415
+        if not rc:
+            raise Exception(err)
+        logger().info(jsonify(rc))
+        return jsonify(rc), 201
+    except Exception as e:
+        logger().exception(str(e))
+        return {"error": str(e)}, 415
 
 
 @projects.get("/<name>/styles/default")
@@ -236,20 +268,22 @@ def project_update_default_style(name):
             "style": {"type": "string"},
         },
     }
-
-    psql_schema = request.args.get("schema", default="public")
-    project = QSAProject(name, psql_schema)
-    if project.exists():
+    try:
+        logger().info(request.get_json())
+        psql_schema = request.args.get("schema", default="public")
+        project = QSAProject(name, psql_schema)
+        if not project.exists():
+            raise Exception("Project does not exist")
         data = request.get_json()
-        try:
-            validate(data, schema)
-        except ValidationError as e:
-            return {"error": e.message}, 415
+        
+        validate(data, schema)
 
         project.style_update(data["geometry"], data["style"])
+        logger().info(jsonify(True))
         return jsonify(True), 201
-    else:
-        return {"error": "Project does not exist"}, 415
+    except Exception as e:
+        logger().exception(str(e))
+        return {"error": str(e)}, 415
 
 
 @projects.get("/<name>/layers")
@@ -276,16 +310,16 @@ def project_add_layer(name):
             "datetime": {"type": "string"},
         },
     }
+    try:
+        logger().info(request.get_json())
+        psql_schema = request.args.get("schema", default="public")
+        project = QSAProject(name, psql_schema)
 
-    psql_schema = request.args.get("schema", default="public")
-    project = QSAProject(name, psql_schema)
-
-    if project.exists():
+        if not project.exists():
+            raise Exception("Project does not exist")
         data = request.get_json()
-        try:
-            validate(data, schema)
-        except ValidationError as e:
-            return {"error": e.message}, 415
+
+        validate(data, schema)
 
         crs = -1
         if "crs" in data:
@@ -302,7 +336,7 @@ def project_add_layer(name):
                 data["datetime"], "yyyy-MM-dd HH:mm:ss"
             )
             if not datetime.isValid():
-                return {"error": "Invalid datetime"}, 415
+                raise Exception("Invalid datetime")
 
         rc, err = project.add_layer(
             data["datasource"],
@@ -312,13 +346,13 @@ def project_add_layer(name):
             overview,
             datetime,
         )
-        if rc:
-            return jsonify(rc), 201
-        else:
-            return {"error": err}, 415
-    else:
-        return {"error": "Project does not exist"}, 415
-
+        if not rc:
+            raise Exception(err)
+        logger().info(jsonify(rc))
+        return jsonify(rc), 201
+    except Exception as e:
+        logger().exception(str(e))
+        return {"error": str(e)}, 415
 
 @projects.get("/<name>/layers/<layer_name>")
 def project_info_layer(name, layer_name):
