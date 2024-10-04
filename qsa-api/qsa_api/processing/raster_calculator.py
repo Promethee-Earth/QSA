@@ -61,6 +61,8 @@ class RasterCalculator:
             RasterCalculator._debug("Write temporary raster on disk")
 
             file_writer = QgsRasterFileWriter(fp.name)
+            file_writer.setCreateOptions(['COMPRESS=DEFLATE', 'PREDICTOR=2'])
+            
             pipe = QgsRasterPipe()
             pipe.set(lyr.dataProvider().clone())
             rc = file_writer.writeRaster(
