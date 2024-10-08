@@ -136,6 +136,7 @@ class QSAMapProxy:
             "type": "wms",
             "wms_opts": {
                 "legendgraphic": True,
+                "featureinfo": True,
             },
             "req": {
                 "url": qgisserver_base_url(self.name, self.schema),
