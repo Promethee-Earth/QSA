@@ -505,6 +505,7 @@ class QSAProject:
     def _add_style_raster(
         self, name: str, symbology: dict, rendering: dict
     ) -> (bool, str):
+        logger().debug("Tesss")
         # safety check
         if "type" not in symbology:
             return False, "`type` is missing in `symbology`"
