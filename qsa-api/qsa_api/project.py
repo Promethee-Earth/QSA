@@ -505,7 +505,6 @@ class QSAProject:
     def _add_style_raster(
         self, name: str, symbology: dict, rendering: dict
     ) -> (bool, str):
-        self.debug("Tesss")
         # safety check
         if "type" not in symbology:
             return False, "`type` is missing in `symbology`"
@@ -602,6 +601,7 @@ class QSAProject:
 
             # save
             path = self._qgis_project_dir / f"{name}.qml"
+            self.debug(path.as_uri)
             rl.saveNamedStyle(
                 path.as_posix(), categories=QgsMapLayer.AllStyleCategories
             )
