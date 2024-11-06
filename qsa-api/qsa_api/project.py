@@ -514,6 +514,7 @@ class QSAProject:
 
         # init renderer
         tif = Path(__file__).resolve().parent / "raster" / "empty.tif"
+        self.debug("tif" + tif.as_uri)
         rl = QgsRasterLayer(tif.as_posix(), "", "gdal")
 
         # symbology
