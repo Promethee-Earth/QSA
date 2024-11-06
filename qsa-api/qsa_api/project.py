@@ -573,7 +573,7 @@ class QSAProject:
                         if renderer.red_min is not None:
                             red_ce.setMinimumValue(renderer.red_min)
                         if renderer.red_max is not None:
-                            print("renderer.red_max" + renderer.red_max)
+                            print("renderer.red_max" + str(renderer.red_max))
                             red_ce.setMaximumValue(renderer.red_max)
                         rl.renderer().setRedContrastEnhancement(red_ce)
 
@@ -584,7 +584,7 @@ class QSAProject:
                         if renderer.green_min is not None:
                             green_ce.setMinimumValue(renderer.green_min)
                         if renderer.green_max is not None:
-                            print("renderer.green_max" + renderer.green_max)
+                            print("renderer.green_max" + str(renderer.green_max))
                             green_ce.setMaximumValue(renderer.green_max)
                         rl.renderer().setGreenContrastEnhancement(green_ce)
 
@@ -595,7 +595,7 @@ class QSAProject:
                         if renderer.blue_min is not None:
                             blue_ce.setMinimumValue(renderer.blue_min)
                         if renderer.blue_max is not None:
-                            print("renderer.blue_max" + renderer.blue_max)
+                            print("renderer.blue_max" + str(renderer.blue_max))
                             blue_ce.setMaximumValue(renderer.blue_max)
                         rl.renderer().setBlueContrastEnhancement(blue_ce)
 
