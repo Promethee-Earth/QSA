@@ -505,7 +505,7 @@ class QSAProject:
     def _add_style_raster(
         self, name: str, symbology: dict, rendering: dict
     ) -> (bool, str):
-        logger().debug("Tesss")
+        self.debug("Tesss")
         # safety check
         if "type" not in symbology:
             return False, "`type` is missing in `symbology`"
@@ -574,7 +574,7 @@ class QSAProject:
                         if renderer.red_min is not None:
                             red_ce.setMinimumValue(renderer.red_min)
                         if renderer.red_max is not None:
-                            logger().debug("renderer.red_max" + str(renderer.red_max))
+                            self.debug("renderer.red_max" + str(renderer.red_max))
                             red_ce.setMaximumValue(renderer.red_max)
                         rl.renderer().setRedContrastEnhancement(red_ce)
 
@@ -585,7 +585,7 @@ class QSAProject:
                         if renderer.green_min is not None:
                             green_ce.setMinimumValue(renderer.green_min)
                         if renderer.green_max is not None:
-                            logger().debug("renderer.green_max" + str(renderer.green_max))
+                            self.debug("renderer.green_max" + str(renderer.green_max))
                             green_ce.setMaximumValue(renderer.green_max)
                         rl.renderer().setGreenContrastEnhancement(green_ce)
 
@@ -596,7 +596,7 @@ class QSAProject:
                         if renderer.blue_min is not None:
                             blue_ce.setMinimumValue(renderer.blue_min)
                         if renderer.blue_max is not None:
-                            logger().debug("renderer.blue_max" + str(renderer.blue_max))
+                            self.debug("renderer.blue_max" + str(renderer.blue_max))
                             blue_ce.setMaximumValue(renderer.blue_max)
                         rl.renderer().setBlueContrastEnhancement(blue_ce)
 
