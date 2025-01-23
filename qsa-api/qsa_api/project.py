@@ -433,7 +433,10 @@ class QSAProject:
             password = config().qgisserver_projects_psql_password
             host = config().qgisserver_projects_psql_host
             port = config().qgisserver_projects_psql_port
-            tableName = datasource.split(".")[1].replace('"',"").replace("(wkb_geometry)","").strip()
+            tableName = datasource
+            if("wkb_geometry" in datasource):
+                tableName = datasource.split(".")[1].replace('"',"").replace("(wkb_geometry)","").strip()
+                
             uri = QgsDataSourceUri()    
             uri.setConnection(host, port, dbname, user, password)
             uri.setDataSource("public",tableName, "wkb_geometry")
