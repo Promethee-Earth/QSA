@@ -442,7 +442,7 @@ class QSAProject:
                 uri.setDataSource("public",tableName, "wkb_geometry")
 
                 tableName = uri.uri(False)
-            
+            self.debug(f"Test tbe : {tableName}")
             lyr = QgsVectorLayer(tableName, name, provider)
         elif t == Qgis.LayerType.Raster:
             self.debug("Init raster layer")
