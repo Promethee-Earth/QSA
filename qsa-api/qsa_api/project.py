@@ -437,13 +437,13 @@ class QSAProject:
             if("wkb_geometry" in datasource):
                 tableName = datasource.split(".")[1].replace('"',"").replace("(wkb_geometry)","").strip()
                 
-            uri = QgsDataSourceUri()    
-            uri.setConnection(host, port, dbname, user, password)
-            uri.setDataSource("public",tableName, "wkb_geometry")
+                uri = QgsDataSourceUri()    
+                uri.setConnection(host, port, dbname, user, password)
+                uri.setDataSource("public",tableName, "wkb_geometry")
 
-            datasourceNew = uri.uri(False)
+                tableName = uri.uri(False)
             
-            lyr = QgsVectorLayer(datasourceNew, name, provider)
+            lyr = QgsVectorLayer(tableName, name, provider)
         elif t == Qgis.LayerType.Raster:
             self.debug("Init raster layer")
             lyr = QgsRasterLayer(datasource, name, provider)
