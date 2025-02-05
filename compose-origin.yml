@@ -1,0 +1,59 @@
+version: '2'
+services:
+  qgisserver:
+    image: qgis/qgis-server:3.40.2-jammy
+    volumes:
+      - ${QSA_PATH}/projects/qsa:/io/data
+      - ${QSA_PATH}/qsa-plugin:/io/plugins/qsa
+      - ./pg_service.conf:/etc/postgresql-common/pg_service.conf
+    environment:
+      QGIS_USER: 1000
+      QGIS_SERVER_LOG_LEVEL: 0
+      QGIS_SERVER_PROJECT_CACHE_STRATEGY: periodic
+      QSA_HOST: "qsa"
+      QSA_PORT: 5051
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY}
+
+  qsa:
+    image: pblottiere/qsa
+    build:
+      context: ${QSA_PATH}
+      dockerfile: Dockerfile.debug
+    restart: always
+    environment:
+      - QSA_LOGLEVEL=DEBUG
+      - QSA_QGISSERVER_URL=http://qgisserver/ogc/
+      - QSA_QGISSERVER_PROJECTS_DIR=/projects
+      - QSA_QGISSERVER_MONITORING_PORT=5051
+      - QSA_QGISSERVER_PROJECTS_PSQL_SERVICE=qsa
+      - QSA_QGISSERVER_PROJECTS_PSQL_DBNAME=qsa
+      - QSA_QGISSERVER_PROJECTS_PSQL_USER=postgres
+      - QSA_QGISSERVER_PROJECTS_PSQL_PASSWORD=postgres
+      - QSA_QGISSERVER_PROJECTS_PSQL_HOST=postgres
+      - QSA_QGISSERVER_PROJECTS_PSQL_PORT=5432
+      - QSA_MAPPROXY_PROJECTS_DIR=/mapproxy
+      - AWS_ACCESS_KEY_ID=${S3_ACCESS_KEY}
+      - AWS_SECRET_ACCESS_KEY=${S3_SECRET_KEY}
+    volumes:
+      - ${QSA_PATH}/projects/qsa:/projects
+      - ./pg_service.conf:/root/.pg_service.conf
+      - ${QSA_PATH}/mapproxy-data:/mapproxy
+    ports:
+      - "5000:5000"
+      - "5678:5678"
+
+  map-proxy:
+    image: kartoza/mapproxy
+   build:
+     context: ${QSA_PATH}
+     dockerfile: Dockerfile.mapproxy
+    ports:
+      - "8081:8080"
+    volumes:
+      - ${QSA_PATH}/mapproxy-data:/multi_mapproxy
+    environment:
+      - MULTI_MAPPROXY=true
+      - PROCESSES=16
+      - CHEAPER=4
+      - THREADS=2

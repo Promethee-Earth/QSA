@@ -14,3 +14,4 @@ sandbox/*.png
 mapproxy/
 mapproxy-data/
 projects/
+.idea/
