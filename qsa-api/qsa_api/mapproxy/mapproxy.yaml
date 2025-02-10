@@ -11,7 +11,6 @@ grids:
     webmercator:
         base: GLOBAL_WEBMERCATOR
         srs: 'EPSG:3857'
-        tile_size: [256, 256]
         origin: 'nw'           # Origine pour correspondre à la norme EPSG:3857
 
 globals:
