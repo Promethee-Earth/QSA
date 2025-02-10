@@ -19,7 +19,7 @@ services:
     image: pblottiere/qsa
     build:
       context: ${QSA_PATH}
-      dockerfile: Dockerfile.debug
+      dockerfile: debug.Dockerfile
     restart: always
     environment:
       - QSA_LOGLEVEL=DEBUG
@@ -47,7 +47,7 @@ services:
     image: kartoza/mapproxy
    build:
      context: ${QSA_PATH}
-     dockerfile: Dockerfile.mapproxy
+     dockerfile: mapproxy.Dockerfile
     ports:
       - "8081:8080"
     volumes:
