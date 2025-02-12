@@ -596,8 +596,8 @@ class QSAProject:
                 max_cut = histogram.minimum + (i / len(histogram_data)) * (histogram.maximum - histogram.minimum)
                 break
 
-        print(f"Min (2%): {min_cut}, Max (98%): {original_max}")
-        print(f"Min (origin): {original_min}, Max (origin): {max_cut}")
+        self.debug(f"Min (origin): {original_min}, Max (origin): {max_cut}")
+        self.debug(f"Min (2%): {min_cut}, Max (98%): {original_max}")
 
         # save style
         if renderer.renderer:
