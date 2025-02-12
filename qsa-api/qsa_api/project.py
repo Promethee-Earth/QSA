@@ -5,6 +5,7 @@ import sqlite3
 import sys
 from pathlib import Path
 
+import rasterio
 from qgis.core import (
     Qgis,
     QgsApplication,
@@ -18,7 +19,6 @@ from qgis.core import (
     QgsMapLayer,
     QgsMarkerSymbol,
     QgsProject,
-    QgsRasterBandStats,
     QgsRasterLayer,
     QgsRasterLayerTemporalProperties,
     QgsRasterMinMaxOrigin,
@@ -579,14 +579,17 @@ class QSAProject:
         else:
             num_bins = 512  # Valeur par défaut
 
-        stat = provider.bandStatistics(1, QgsRasterBandStats.All, rl.extent(), 0)
-        original_min = stat.minimumValue
-        original_max = stat.maximumValue
-        
-        histogram = provider.histogram(1, num_bins, stat.minimumValue,stat.maximumValue, QgsRectangle(), 250000)
+        original_min = None
+        original_max = None
+        with rasterio.open(tif) as src:
+            band = src.read(1)
+            original_min = band.min()
+            original_max = band.max()
+        self.debug(f"Min (origin): {original_min}, Max (origin): {original_max}")
+        logger().debug(f"Min (origin): {original_min}, Max (origin): {original_max}")
+
+        histogram = provider.histogram(1, num_bins, original_min,original_max, QgsRectangle(), 250000)
         histogram_data = histogram.histogramVector
-        original_min = histogram.minimum
-        original_max = histogram.maximum
 
         total_count = sum(histogram_data)
         p2 = total_count * 0.02
@@ -603,7 +606,6 @@ class QSAProject:
                 max_cut = histogram.minimum + (i / len(histogram_data)) * (histogram.maximum - histogram.minimum)
                 break
 
-        logger().debug(f"Min (origin): {original_min}, Max (origin): {original_max}")
         logger().debug(f"Min (2%): {min_cut}, Max (98%): {max_cut}")
  
         # save style
