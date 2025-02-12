@@ -5,7 +5,6 @@ import sqlite3
 import sys
 from pathlib import Path
 
-import rasterio
 from qgis.core import (
     Qgis,
     QgsApplication,
@@ -18,7 +17,9 @@ from qgis.core import (
     QgsLineSymbol,
     QgsMapLayer,
     QgsMarkerSymbol,
+    QgsMultiBandColorRenderer,
     QgsProject,
+    QgsRasterBandStats,
     QgsRasterLayer,
     QgsRasterLayerTemporalProperties,
     QgsRasterMinMaxOrigin,
@@ -565,30 +566,35 @@ class QSAProject:
         self.__process_renderering(rl, rendering)
 
         provider = rl.dataProvider()
-        raster_type = provider.dataType(1)  # Récupérer le type de la première bande
+        extend = rl.extent()
+        stats = provider.bandStatistics(1, QgsRasterBandStats.All, extend, 0)
+        min_v = stats.minimumValue
+        max_v = stats.maximumValue
+        self.debug(f"Min: {min_v}, Max: {max_v}")
+        
+        raster_type = provider.dataType(1)
+        match raster_type:
+            case 0:  # Byte (0-255)
+                num_bins = 256
+            case 1, 2:  # Int16, UInt16
+                num_bins = 512
+            case 3, 4:  # Int32, UInt32
+                num_bins = 1024
+            case 5, 6:  # Float32, Float64
+                num_bins = 2048
+            case _:  # default
+                num_bins = 512
 
-        # Adapter dynamiquement le nombre de bins
-        if raster_type in [0]:  # Byte (0-255)
-            num_bins = 256
-        elif raster_type in [1, 2]:  # Int16, UInt16
-            num_bins = 512
-        elif raster_type in [3, 4]:  # Int32, UInt32
-            num_bins = 1024
-        elif raster_type in [5, 6]:  # Float32, Float64
-            num_bins = 2048
-        else:
-            num_bins = 512  # Valeur par défaut
+        # original_min = None
+        # original_max = None
+        # with rasterio.open(tif) as src:
+        #     band = src.read(1)
+        #     original_min = band.min()
+        #     original_max = band.max()
+        # self.debug(f"Min (origin): {original_min}, Max (origin): {original_max}")
+        # logger().debug(f"Min (origin): {original_min}, Max (origin): {original_max}")
 
-        original_min = None
-        original_max = None
-        with rasterio.open(tif) as src:
-            band = src.read(1)
-            original_min = band.min()
-            original_max = band.max()
-        self.debug(f"Min (origin): {original_min}, Max (origin): {original_max}")
-        logger().debug(f"Min (origin): {original_min}, Max (origin): {original_max}")
-
-        histogram = provider.histogram(1, num_bins, original_min,original_max, QgsRectangle(), 250000)
+        histogram = provider.histogram(1, num_bins, min_v,max_v, QgsRectangle(), 250000)
         histogram_data = histogram.histogramVector
 
         total_count = sum(histogram_data)
@@ -607,6 +613,39 @@ class QSAProject:
                 break
 
         logger().debug(f"Min (2%): {min_cut}, Max (98%): {max_cut}")
+
+        if renderer.type == RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR:
+            rd = rl.renderer()
+            if isinstance(rd, QgsSingleBandPseudoColorRenderer):
+                rd.setClassificationMax(max_cut)
+                rd.setClassificationMin(min_cut)
+                rl.triggerRepaint()
+            elif isinstance(rd, QgsMultiBandColorRenderer):
+                red_band = rd.redBand()
+                green_band = rd.greenBand()
+                blue_band = rd.blueBand()
+                new_renderer = QgsMultiBandColorRenderer(provider, red_band, green_band, blue_band)
+
+                ce_red = QgsContrastEnhancement(provider.dataType(red_band))
+                ce_red.setMinimumValue(min_cut)
+                ce_red.setMaximumValue(max_cut)
+
+                ce_green = QgsContrastEnhancement(provider.dataType(green_band))
+                ce_green.setMinimumValue(min_cut)
+                ce_green.setMaximumValue(max_cut)
+
+                ce_blue = QgsContrastEnhancement(provider.dataType(blue_band))
+                ce_blue.setMinimumValue(min_cut)
+                ce_blue.setMaximumValue(max_cut)
+
+                new_renderer.setRedContrastEnhancement(ce_red)
+                new_renderer.setGreenContrastEnhancement(ce_green)
+                new_renderer.setBlueContrastEnhancement(ce_blue)
+
+                rl.setRenderer(new_renderer)
+                rl.triggerRepaint()
+
+        return True, ""
  
         # save style
         if renderer.renderer:
