@@ -18,9 +18,11 @@ from qgis.core import (
     QgsMapLayer,
     QgsMarkerSymbol,
     QgsProject,
+    QgsRasterBandStats,
     QgsRasterLayer,
     QgsRasterLayerTemporalProperties,
     QgsRasterMinMaxOrigin,
+    QgsRectangle,
     QgsRendererCategory,
     QgsRendererRange,
     QgsSingleBandPseudoColorRenderer,
@@ -564,8 +566,6 @@ class QSAProject:
 
         provider = rl.dataProvider()
         raster_type = provider.dataType(1)  # Récupérer le type de la première bande
-        original_min = provider.bandStatistics(1).minimumValue
-        original_max = provider.bandStatistics(1).maximumValue
 
         # Adapter dynamiquement le nombre de bins
         if raster_type in [0]:  # Byte (0-255)
@@ -578,8 +578,15 @@ class QSAProject:
             num_bins = 2048
         else:
             num_bins = 512  # Valeur par défaut
-        histogram = provider.histogram(1, num_bins)
+
+        stat = provider.bandStatistics(1, QgsRasterBandStats.All, rl.extent(), 0)
+        original_min = stat.minimumValue
+        original_max = stat.maximumValue
+        
+        histogram = provider.histogram(1, num_bins, stat.minimumValue,stat.maximumValue, QgsRectangle(), 250000)
         histogram_data = histogram.histogramVector
+        original_min = histogram.minimum
+        original_max = histogram.maximum
 
         total_count = sum(histogram_data)
         p2 = total_count * 0.02
@@ -596,9 +603,9 @@ class QSAProject:
                 max_cut = histogram.minimum + (i / len(histogram_data)) * (histogram.maximum - histogram.minimum)
                 break
 
-        self.debug(f"Min (origin): {original_min}, Max (origin): {max_cut}")
-        self.debug(f"Min (2%): {min_cut}, Max (98%): {original_max}")
-
+        logger().debug(f"Min (origin): {original_min}, Max (origin): {original_max}")
+        logger().debug(f"Min (2%): {min_cut}, Max (98%): {max_cut}")
+ 
         # save style
         if renderer.renderer:
             rl.setRenderer(renderer.renderer)
