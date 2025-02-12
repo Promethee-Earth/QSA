@@ -24,5 +24,4 @@ ENV PATH=/qsa/qsa-api/venv/bin:$PATH
 EXPOSE 5000
 EXPOSE 5678
 
-# "--wait-for-client"
-CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "gunicorn"  , "-b", "0.0.0.0:5000", "--workers", "1", "--threads", "4", "--timeout", "1000", "--log-level", "debug", "qsa_api.app:app"]
+CMD ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "gunicorn"  , "-b", "0.0.0.0:5000", "--workers", "1", "--threads", "1", "--timeout", "1000", "--log-level", "debug", "qsa_api.app:app"]

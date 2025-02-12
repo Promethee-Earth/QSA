@@ -9,15 +9,38 @@
             "type": "python",
             "request": "attach",
             "connect": {
-                "host": "localhost",
+                "host": "0.0.0.0",
                 "port": 5678
             },
             "pathMappings": [
                 {
-                "localRoot": "${workspaceFolder}",
-                "remoteRoot": "/qsa"
+                    "localRoot": "${workspaceFolder}",
+                    "remoteRoot": "/qsa"
                 }
-            ]
-            }
+            ],
+            "preLaunchTask": "Docker Compose Build"
+            // "preLaunchTask": "Docker Compose Build"
+        },
+        // {
+        //     "name": "Python: Flask (Debug Mode)",
+        //     "type": "debugpy",
+        //     "request": "launch",
+        //     "module": "qsa_api.app",  // Point vers le module où se trouve l'instance `app` Flask
+        //     "cwd": "${workspaceFolder}/qsa-api",
+        //     "env": {
+        //         "FLASK_APP": "qsa_api.app",
+        //         "FLASK_DEBUG": "1",
+        //         "PYTHONPATH": "${workspaceFolder}/qsa-api",
+        //         "XDG_RUNTIME_DIR": "/tmp"
+        //     },
+        //     "args": [],
+        //     // "args": [
+        //     //     "--debug",  // Active le débogage (peut être redondant avec FLASK_DEBUG=1)
+        //     //     "--host=0.0.0.0",
+        //     //     "--port=5000"
+        //     // ],
+        //     "jinja": true,
+        //     "justMyCode": false
+        // }
     ]
 }
