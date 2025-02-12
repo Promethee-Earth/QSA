@@ -23,6 +23,7 @@ from qgis.core import (
     QgsRasterMinMaxOrigin,
     QgsRendererCategory,
     QgsRendererRange,
+    QgsSingleBandPseudoColorRenderer,
     QgsSingleSymbolRenderer,
     QgsSvgMarkerSymbolLayer,
     QgsUnitTypes,
@@ -563,6 +564,8 @@ class QSAProject:
 
         provider = rl.dataProvider()
         raster_type = provider.dataType(1)  # Récupérer le type de la première bande
+        original_min = provider.bandStatistics(1).minimumValue
+        original_max = provider.bandStatistics(1).maximumValue
 
         # Adapter dynamiquement le nombre de bins
         if raster_type in [0]:  # Byte (0-255)
@@ -578,11 +581,23 @@ class QSAProject:
         histogram = provider.histogram(1, num_bins)
         histogram_data = histogram.histogramVector
 
-        histogram_dict = [
-            {"value": i, "count": histogram_data[i]}
-            for i in range(len(histogram_data))
-            if histogram_data[i] > 0
-        ]
+        total_count = sum(histogram_data)
+        p2 = total_count * 0.02
+        p98 = total_count * 0.98
+
+        cumulative = 0
+        min_cut, max_cut = None, None
+
+        for i, count in enumerate(histogram_data):
+            cumulative += count
+            if min_cut is None and cumulative >= p2:
+                min_cut = histogram.minimum + (i / len(histogram_data)) * (histogram.maximum - histogram.minimum)
+            if max_cut is None and cumulative >= p98:
+                max_cut = histogram.minimum + (i / len(histogram_data)) * (histogram.maximum - histogram.minimum)
+                break
+
+        print(f"Min (2%): {min_cut}, Max (98%): {original_max}")
+        print(f"Min (origin): {original_min}, Max (origin): {max_cut}")
 
         # save style
         if renderer.renderer:
@@ -603,6 +618,13 @@ class QSAProject:
                         if renderer.gray_max is not None:
                             ce.setMaximumValue(renderer.gray_max)
                         rl.renderer().setContrastEnhancement(ce)
+
+                    elif renderer.type == RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR:
+                        renderer = rl.renderer()
+                        if isinstance(renderer, QgsSingleBandPseudoColorRenderer):
+                            renderer.setClassificationMax(max_cut)
+                            renderer.setClassificationMin(min_cut)
+                            rl.triggerRepaint()
 
                     elif renderer.type == RasterSymbologyRenderer.Type.MULTI_BAND_COLOR:
                         # red
