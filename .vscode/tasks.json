@@ -1,0 +1,10 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Docker Compose Build",
+            "type": "shell",
+            "command": "docker compose -f ../EOP-Backend/docker-compose.yml up -d --build qsa",
+        }
+    ]
+}

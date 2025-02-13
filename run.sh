@@ -1,4 +1,4 @@
-$path=$(pwd)
-cd sandbox
+path=$(pwd)
+cd sandbox || exit
 docker compose up -d
-cd $path
+cd "$path" || exit
