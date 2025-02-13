@@ -570,7 +570,7 @@ class QSAProject:
         stats = provider.bandStatistics(1, QgsRasterBandStats.All, extend, 0)
         min_v = stats.minimumValue
         max_v = stats.maximumValue
-        self.debug(f"Min: {min_v}, Max: {max_v}")
+        self.debug(f"Min (value): {min_v}, Max (value): {max_v}")
         
         raster_type = provider.dataType(1)
         match raster_type:
@@ -596,6 +596,8 @@ class QSAProject:
 
         histogram = provider.histogram(1, num_bins, min_v,max_v, QgsRectangle(), 250000)
         histogram_data = histogram.histogramVector
+        orign_min = histogram.minimum
+        orign_max = histogram.maximum
 
         total_count = sum(histogram_data)
         p2 = total_count * 0.02
@@ -612,7 +614,8 @@ class QSAProject:
                 max_cut = histogram.minimum + (i / len(histogram_data)) * (histogram.maximum - histogram.minimum)
                 break
 
-        logger().debug(f"Min (2%): {min_cut}, Max (98%): {max_cut}")
+        self.debug(f"Min (origin): {orign_min}, Max (origin): {orign_max}")
+        self.debug(f"Min (2%): {min_cut}, Max (98%): {max_cut}")
 
         if renderer.type == RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR:
             rd = rl.renderer()
