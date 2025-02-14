@@ -573,13 +573,18 @@ class QSAProject:
         renderer.load(symbology["properties"])
 
         self.__process_renderering(rl, rendering)
+        self.debug(f"Rendering : start")
         rl.setContrastEnhancement(
             QgsContrastEnhancement.ContrastEnhancementAlgorithm.UserDefinedEnhancement,
             QgsRasterMinMaxOrigin.Limits.CumulativeCut,
         )
+        self.debug(f"Rendering : contrast enhancement set")
         renderer.setCumulativeCut(rl, 10.)
+        self.debug(f"Rendering : cumulative cut set")
         rl.setRenderer(renderer.renderer)
+        self.debug(f"Rendering : renderer set")
         rl.triggerRepaint()
+        self.debug(f"Rendering : trigger repaint")
         path = self._qgis_project_dir / f"{name}.qml"
         rl.saveNamedStyle(
             path.as_posix(), categories=QgsMapLayer.AllStyleCategories)
