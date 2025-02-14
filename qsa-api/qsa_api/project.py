@@ -60,8 +60,10 @@ class QSAProject:
             cur = con.cursor()
             cur.execute("CREATE TABLE styles_default(geometry, style)")
             cur.execute("INSERT INTO styles_default VALUES('line', 'default')")
-            cur.execute("INSERT INTO styles_default VALUES('polygon', 'default')")
-            cur.execute("INSERT INTO styles_default VALUES('point', 'default')")
+            cur.execute(
+                "INSERT INTO styles_default VALUES('polygon', 'default')")
+            cur.execute(
+                "INSERT INTO styles_default VALUES('point', 'default')")
             con.commit()
             con.close()
         return p
@@ -72,7 +74,8 @@ class QSAProject:
 
         if StorageBackend.type() == StorageBackend.FILESYSTEM:
             for i in QSAProject._qgis_projects_dir().glob("**/*.qgs"):
-                name = i.parent.name.replace(QSAProject._qgis_project_dir_prefix(), "")
+                name = i.parent.name.replace(
+                    QSAProject._qgis_project_dir_prefix(), "")
                 p.append(QSAProject(name))
             return p
         else:
@@ -106,7 +109,8 @@ class QSAProject:
     @property
     def project(self) -> QgsProject:
         project = QgsProject()
-        project.read(self._qgis_project_uri, Qgis.ProjectReadFlag.DontResolveLayers)
+        project.read(self._qgis_project_uri,
+                     Qgis.ProjectReadFlag.DontResolveLayers)
         return project
 
     @property
@@ -129,7 +133,8 @@ class QSAProject:
         p.read(self._qgis_project_uri, Qgis.ProjectReadFlag.DontResolveLayers)
 
         m["author"] = p.metadata().author()
-        m["creation_datetime"] = p.metadata().creationDateTime().toString(Qt.ISODate)
+        m["creation_datetime"] = p.metadata(
+        ).creationDateTime().toString(Qt.ISODate)
         m["crs"] = p.crs().authid()
         m["storage"] = StorageBackend.type().name.lower()
 
@@ -142,12 +147,12 @@ class QSAProject:
 
         return m
 
-    def cache_metadata(self) -> (dict, str):
+    def cache_metadata(self) -> (dict | str):
         if self._mapproxy_enabled:
             return QSAMapProxy(self.name).metadata(), ""
         return {}, "Cache is disabled"
 
-    def cache_reset(self) -> (bool, str):
+    def cache_reset(self) -> (bool | str):
         if self._mapproxy_enabled:
             mp = QSAMapProxy(self.name)
             rc, err = mp.read()
@@ -182,7 +187,7 @@ class QSAProject:
         con.close()
         return default_style
 
-    def style(self, name: str) -> (dict, str):
+    def style(self, name: str) -> (dict | str):
         if name not in self.styles:
             return {}, "Invalid style"
 
@@ -230,7 +235,8 @@ class QSAProject:
                 infos["geometry"] = QgsWkbTypes.displayString(layer.wkbType())
             elif layer.type() == Qgis.LayerType.Raster:
                 infos["bands"] = layer.bandCount()
-                infos["data_type"] = layer.dataProvider().dataType(1).name.lower()
+                infos["data_type"] = layer.dataProvider().dataType(
+                    1).name.lower()
 
             infos["source"] = layer.source()
             infos["crs"] = layer.crs().authid()
@@ -244,7 +250,7 @@ class QSAProject:
 
     def layer_update_style(
         self, layer_name: str, style_name: str, current: bool
-    ) -> (bool, str):
+    ) -> (bool | str):
         # if layer_name not in self.layers:
         #     return False, f"Layer '{layer_name}' does not exist"
 
@@ -299,7 +305,8 @@ class QSAProject:
     def remove_layer(self, name: str) -> bool:
         # remove layer in qgis project
         project = QgsProject()
-        project.read(self._qgis_project_uri, Qgis.ProjectReadFlag.DontResolveLayers)
+        project.read(self._qgis_project_uri,
+                     Qgis.ProjectReadFlag.DontResolveLayers)
 
         ids = []
         for layer in project.mapLayersByName(name):
@@ -347,7 +354,7 @@ class QSAProject:
 
             return self.name in projects and self._qgis_projects_dir().exists()
 
-    def create(self, author: str) -> (bool, str):
+    def create(self, author: str) -> (bool | str):
         if self.exists():
             return False
 
@@ -410,7 +417,7 @@ class QSAProject:
         epsg_code: int,
         overview: bool,
         datetime: QDateTime | None,
-    ) -> (bool, str):
+    ) -> (bool | str):
         t = self._layer_type(layer_type)
         if t is None:
             return False, "Invalid layer type"
@@ -489,7 +496,8 @@ class QSAProject:
 
         # create project
         project = QgsProject()
-        project.read(self._qgis_project_uri, Qgis.ProjectReadFlag.DontResolveLayers)
+        project.read(self._qgis_project_uri,
+                     Qgis.ProjectReadFlag.DontResolveLayers)
         project.addMapLayer(lyr)
 
         self.debug("Write QGIS project")
@@ -535,19 +543,20 @@ class QSAProject:
         layer_type: str,
         symbology: dict,
         rendering: dict,
-    ) -> (bool, str):
+        source: str = None
+    ) -> (bool | str):
         t = self._layer_type(layer_type)
         match t:
             case Qgis.LayerType.Vector:
                 return self._add_style_vector(name, symbology, rendering)
             case Qgis.LayerType.Raster:
-                return self._add_style_raster(name, symbology, rendering)
+                return self._add_style_raster(name, symbology, rendering, source)
             case other:
                 return False, "Invalid layer type"
 
     def _add_style_raster(
-        self, name: str, symbology: dict, rendering: dict
-    ) -> (bool, str):
+        self, name: str, symbology: dict, rendering: dict, source: str = None
+    ) -> (bool | str):
         # safety check
         if "type" not in symbology:
             return False, "`type` is missing in `symbology`"
@@ -564,159 +573,55 @@ class QSAProject:
         renderer.load(symbology["properties"])
 
         self.__process_renderering(rl, rendering)
-
-        provider = rl.dataProvider()
-        extend = rl.extent()
-        stats = provider.bandStatistics(1, QgsRasterBandStats.All, extend, 0)
-        min_v = stats.minimumValue
-        max_v = stats.maximumValue
-        self.debug(f"Min (value): {min_v}, Max (value): {max_v}")
-        
-        raster_type = provider.dataType(1)
-        match raster_type:
-            case 0:  # Byte (0-255)
-                num_bins = 256
-            case 1, 2:  # Int16, UInt16
-                num_bins = 512
-            case 3, 4:  # Int32, UInt32
-                num_bins = 1024
-            case 5, 6:  # Float32, Float64
-                num_bins = 2048
-            case _:  # default
-                num_bins = 512
-
-        # original_min = None
-        # original_max = None
-        # with rasterio.open(tif) as src:
-        #     band = src.read(1)
-        #     original_min = band.min()
-        #     original_max = band.max()
-        # self.debug(f"Min (origin): {original_min}, Max (origin): {original_max}")
-        # logger().debug(f"Min (origin): {original_min}, Max (origin): {original_max}")
-
-        histogram = provider.histogram(1, num_bins, min_v,max_v, QgsRectangle(), 250000)
-        histogram_data = histogram.histogramVector
-        orign_min = histogram.minimum
-        orign_max = histogram.maximum
-
-        total_count = sum(histogram_data)
-        p2 = total_count * 0.02
-        p98 = total_count * 0.98
-
-        cumulative = 0
-        min_cut, max_cut = None, None
-
-        for i, count in enumerate(histogram_data):
-            cumulative += count
-            if min_cut is None and cumulative >= p2:
-                min_cut = histogram.minimum + (i / len(histogram_data)) * (histogram.maximum - histogram.minimum)
-            if max_cut is None and cumulative >= p98:
-                max_cut = histogram.minimum + (i / len(histogram_data)) * (histogram.maximum - histogram.minimum)
-                break
-
-        self.debug(f"Min (origin): {orign_min}, Max (origin): {orign_max}")
-        self.debug(f"Min (2%): {min_cut}, Max (98%): {max_cut}")
-
-        if renderer.type == RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR:
-            rd = rl.renderer()
-            if isinstance(rd, QgsSingleBandPseudoColorRenderer):
-                rd.setClassificationMax(max_cut)
-                rd.setClassificationMin(min_cut)
-                rl.triggerRepaint()
-            elif isinstance(rd, QgsMultiBandColorRenderer):
-                red_band = rd.redBand()
-                green_band = rd.greenBand()
-                blue_band = rd.blueBand()
-                new_renderer = QgsMultiBandColorRenderer(provider, red_band, green_band, blue_band)
-
-                ce_red = QgsContrastEnhancement(provider.dataType(red_band))
-                ce_red.setMinimumValue(min_cut)
-                ce_red.setMaximumValue(max_cut)
-
-                ce_green = QgsContrastEnhancement(provider.dataType(green_band))
-                ce_green.setMinimumValue(min_cut)
-                ce_green.setMaximumValue(max_cut)
-
-                ce_blue = QgsContrastEnhancement(provider.dataType(blue_band))
-                ce_blue.setMinimumValue(min_cut)
-                ce_blue.setMaximumValue(max_cut)
-
-                new_renderer.setRedContrastEnhancement(ce_red)
-                new_renderer.setGreenContrastEnhancement(ce_green)
-                new_renderer.setBlueContrastEnhancement(ce_blue)
-
-                rl.setRenderer(new_renderer)
-                rl.triggerRepaint()
-
+        rl.setContrastEnhancement(
+            QgsContrastEnhancement.ContrastEnhancementAlgorithm.UserDefinedEnhancement,
+            QgsRasterMinMaxOrigin.Limits.CumulativeCut,
+        )
+        renderer.setCumulativeCut(rl, 10.)
+        rl.setRenderer(renderer.renderer)
+        rl.triggerRepaint()
+        path = self._qgis_project_dir / f"{name}.qml"
+        rl.saveNamedStyle(
+            path.as_posix(), categories=QgsMapLayer.AllStyleCategories)
         return True, ""
- 
         # save style
-        if renderer.renderer:
-            rl.setRenderer(renderer.renderer)
+        match renderer.renderer:
+            case None:
+                return False, "Error"
+            case _:
+                rl.setRenderer(renderer.renderer)
+                # contrast enhancement needs to be managed after setting renderer
+                if renderer.contrast_algorithm:
+                    rl.setContrastEnhancement(
+                        renderer.contrast_algorithm, renderer.contrast_limits)
+                    # user defined min/max
+                    if renderer.contrast_limits == QgsRasterMinMaxOrigin.Limits.None_:
+                        renderer.setUserDefinedMinMax(rl)
+                    elif renderer.contrast_limits == QgsRasterMinMaxOrigin.Limits.CumulativeCut:
+                        renderer.setCumulativeCut(rl, rendering["percentiles"])
+                # save
+                path = self._qgis_project_dir / f"{name}.qml"
+                rl.saveNamedStyle(
+                    path.as_posix(), categories=QgsMapLayer.AllStyleCategories)
+                return True, ""
+        # if renderer.renderer:
+        #     rl.setRenderer(renderer.renderer)
+        #     # contrast enhancement needs to be managed after setting renderer
+        #     if renderer.contrast_algorithm:
+        #         rl.setContrastEnhancement(renderer.contrast_algorithm, renderer.contrast_limits)
+        #         # user defined min/max
+        #         if renderer.contrast_limits == QgsRasterMinMaxOrigin.Limits.None_:
+        #             renderer.setUserDefinedMinMax(rl)
 
-            # contrast enhancement needs to be managed after setting renderer
-            if renderer.contrast_algorithm:
-                rl.setContrastEnhancement(
-                    renderer.contrast_algorithm, renderer.contrast_limits
-                )
+        #         elif renderer.contrast_limits == QgsRasterMinMaxOrigin.Limits.CumulativeCut:
+        #             renderer.setCumulativeCut(rl, rendering["percentiles"])
 
-                # user defined min/max
-                if renderer.contrast_limits == QgsRasterMinMaxOrigin.Limits.None_:
-                    if renderer.type == RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY:
-                        ce = QgsContrastEnhancement(rl.renderer().contrastEnhancement())
-                        if renderer.gray_min is not None:
-                            ce.setMinimumValue(renderer.gray_min)
-                        if renderer.gray_max is not None:
-                            ce.setMaximumValue(renderer.gray_max)
-                        rl.renderer().setContrastEnhancement(ce)
+        #     # save
+        #     path = self._qgis_project_dir / f"{name}.qml"
+        #     rl.saveNamedStyle(path.as_posix(), categories=QgsMapLayer.AllStyleCategories)
+        #     return True, ""
 
-                    elif renderer.type == RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR:
-                        renderer = rl.renderer()
-                        if isinstance(renderer, QgsSingleBandPseudoColorRenderer):
-                            renderer.setClassificationMax(max_cut)
-                            renderer.setClassificationMin(min_cut)
-                            rl.triggerRepaint()
-
-                    elif renderer.type == RasterSymbologyRenderer.Type.MULTI_BAND_COLOR:
-                        # red
-                        red_ce = QgsContrastEnhancement(
-                            rl.renderer().redContrastEnhancement()
-                        )
-                        
-                        if renderer.red_min is not None:
-                            red_ce.setMinimumValue(renderer.red_min)
-                        if renderer.red_max is not None:
-                            red_ce.setMaximumValue(renderer.red_max)
-                        rl.renderer().setRedContrastEnhancement(red_ce)
-
-                        # green
-                        green_ce = QgsContrastEnhancement(
-                            rl.renderer().greenContrastEnhancement()
-                        )
-                        if renderer.green_min is not None:
-                            green_ce.setMinimumValue(renderer.green_min)
-                        if renderer.green_max is not None:
-                            green_ce.setMaximumValue(renderer.green_max)
-                        rl.renderer().setGreenContrastEnhancement(green_ce)
-
-                        # blue
-                        blue_ce = QgsContrastEnhancement(
-                            rl.renderer().blueContrastEnhancement()
-                        )
-                        if renderer.blue_min is not None:
-                            blue_ce.setMinimumValue(renderer.blue_min)
-                        if renderer.blue_max is not None:
-                            blue_ce.setMaximumValue(renderer.blue_max)
-                        rl.renderer().setBlueContrastEnhancement(blue_ce)
-
-            # save
-            path = self._qgis_project_dir / f"{name}.qml"
-            rl.saveNamedStyle(
-                path.as_posix(), categories=QgsMapLayer.AllStyleCategories
-            )
-            return True, ""
-
-        return False, "Error"
+        # return False, "Error"
 
     def __process_renderering(self, raster: QgsRasterLayer, rendering: dict) -> None:
         # config rendering
@@ -724,17 +629,19 @@ class QSAProject:
             raster.brightnessFilter().setGamma(float(rendering["gamma"]))
 
         if "brightness" in rendering:
-            raster.brightnessFilter().setBrightness(int(rendering["brightness"]))
+            raster.brightnessFilter().setBrightness(
+                int(rendering["brightness"]))
 
         if "contrast" in rendering:
             raster.brightnessFilter().setContrast(int(rendering["contrast"]))
 
         if "saturation" in rendering:
-            raster.hueSaturationFilter().setSaturation(int(rendering["saturation"]))
+            raster.hueSaturationFilter().setSaturation(
+                int(rendering["saturation"]))
 
     def _add_style_vector(
         self, name: str, symbology: dict, rendering: dict
-    ) -> (bool, str):
+    ) -> (bool | str):
         if "type" not in symbology:
             return False, "`type` is missing in `symbology`"
 
@@ -823,7 +730,8 @@ class QSAProject:
                             int(testSplit[3]),
                         )
                     )
-                    svg_layer.setStrokeColor(QColor(0, 0, 0, int(testSplit[3])))
+                    svg_layer.setStrokeColor(
+                        QColor(0, 0, 0, int(testSplit[3])))
                     svg_layer.setSize(categorized_value["size"])
                     symbol.changeSymbolLayer(0, svg_layer)
                     symbol.setSizeUnit(QgsUnitTypes.RenderMillimeters)
@@ -879,7 +787,8 @@ class QSAProject:
                 for graduated_value in properties["list_graduated"]:
                     properties = {}
                     symbol = QgsMarkerSymbol.createSimple(properties)
-                    svg_layer = QgsSvgMarkerSymbolLayer(graduated_value["symbol_path"])
+                    svg_layer = QgsSvgMarkerSymbolLayer(
+                        graduated_value["symbol_path"])
                     testSplit = str(graduated_value["color"]).split(",")
                     svg_layer.setColor(
                         QColor(
@@ -889,7 +798,8 @@ class QSAProject:
                             int(testSplit[3]),
                         )
                     )
-                    svg_layer.setStrokeColor(QColor(0, 0, 0, int(testSplit[3])))
+                    svg_layer.setStrokeColor(
+                        QColor(0, 0, 0, int(testSplit[3])))
                     svg_layer.setSize(graduated_value["size"])
                     symbol.setSizeUnit(QgsUnitTypes.RenderMillimeters)
                     symbol.changeSymbolLayer(0, svg_layer)

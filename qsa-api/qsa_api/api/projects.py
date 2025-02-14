@@ -258,11 +258,14 @@ def project_add_style(name):
             except ValidationError as e:
                 return {"error": e.message}, 415
 
+            layer = project.layer(project.layers[0])
+
             rc, err = project.add_style(
                 data["name"],
                 data["type"],
                 data["symbology"],
                 data["rendering"],
+                layer["source"],
             )
             if rc:
                 return jsonify(rc), 201
@@ -362,7 +365,7 @@ def project_add_layer(name):
             try:
                 validate(data, schema)
             except ValidationError as e:
-                logger().exception(str(e.message))                
+                logger().exception(str(e.message))
                 return {"error": e.message}, 415
 
             crs = -1
@@ -380,7 +383,7 @@ def project_add_layer(name):
                     data["datetime"], "yyyy-MM-dd HH:mm:ss"
                 )
                 if not datetime.isValid():
-                    logger().exception("Invalid datetime")          
+                    logger().exception("Invalid datetime")
                     return {"error": "Invalid datetime"}, 415
 
             rc, err = project.add_layer(
@@ -394,7 +397,7 @@ def project_add_layer(name):
             if rc:
                 return jsonify(rc), 201
             else:
-                logger().exception(str(err))  
+                logger().exception(str(err))
                 return {"error": err}, 415
         else:
             logger().exception("Project does not exist")
