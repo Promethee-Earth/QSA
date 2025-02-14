@@ -1,6 +1,7 @@
 __pycache__
 tests/projects
 venv
+.venv
 symbology-style.db
 poetry.lock
 tests/data/data.gpkg
@@ -11,3 +12,7 @@ docs/build
 sandbox/projects
 *.aux.xml
 sandbox/*.png
+mapproxy/
+mapproxy-data/
+projects/
+.idea/
