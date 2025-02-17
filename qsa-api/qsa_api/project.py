@@ -575,8 +575,7 @@ class QSAProject:
         self.__process_renderering(rl, rendering)
         self.debug(f"Rendering : start")
         rl.setContrastEnhancement(
-            QgsContrastEnhancement.ContrastEnhancementAlgorithm.StretchToMinimumMaximum,
-            QgsRasterMinMaxOrigin.Limits.CumulativeCut,
+            QgsContrastEnhancement.ContrastEnhancementAlgorithm.StretchToMinimumMaximum
         )
         self.debug(f"Rendering : contrast enhancement set")
         
@@ -588,6 +587,12 @@ class QSAProject:
         # self.debug(f"Rendering : renderer set")
         # rl.triggerRepaint()
         rl.renderer().cumulativeCut(0, 0.02, 0.98)
+        min_max_origin = QgsRasterMinMaxOrigin()
+        min_max_origin.setStatistics(QgsRasterMinMaxOrigin.CumulativeCut)
+        min_max_origin.setCumulativeCutLower(2)
+        min_max_origin.setCumulativeCutUpper(98)
+        renderer.setMinMaxOrigin(min_max_origin)
+        rl.setRenderer(renderer)
         rl.triggerRepaint()
         self.debug(f"Rendering : trigger repaint")
         path = self._qgis_project_dir / f"{name}.qml"
