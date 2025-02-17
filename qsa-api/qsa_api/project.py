@@ -574,7 +574,7 @@ class QSAProject:
 
         self.__process_renderering(rl, rendering)
         self.debug(f"Rendering : start")
-        rl.setContrastEnhancement(
+        rl.renderer().setContrastEnhancement(
             QgsContrastEnhancement.ContrastEnhancementAlgorithm.StretchToMinimumMaximum,
             QgsRasterMinMaxOrigin.Limits.CumulativeCut,
         )
