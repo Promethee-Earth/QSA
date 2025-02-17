@@ -569,12 +569,12 @@ class QSAProject:
         rl = QgsRasterLayer(tif.as_posix(), "", "gdal")
 
         # symbology
-        renderer = RasterSymbologyRenderer(symbology["type"])
+        renderer = rl.renderer() #RasterSymbologyRenderer(symbology["type"])
         renderer.load(symbology["properties"])
 
         self.__process_renderering(rl, rendering)
         self.debug(f"Rendering : start")
-        rl.renderer().setContrastEnhancement(
+        rl.setContrastEnhancement(
             QgsContrastEnhancement.ContrastEnhancementAlgorithm.StretchToMinimumMaximum,
             QgsRasterMinMaxOrigin.Limits.CumulativeCut,
         )
