@@ -584,9 +584,8 @@ class QSAProject:
         self.debug(f"min cumulative cut : .10")
         renderer.setCumulativeCut(rl, (90.) / 100, (10.) / 100)
         self.debug(f"Rendering : cumulative cut set")
-        
-        rl.renderer().cumulativeCut(1,(10.) / 100, (90.) / 100)
-        # rl.setRenderer(renderer.renderer)
+        renderer.renderer.cumulativeCut(1,0.02,0.98)
+        rl.setRenderer(renderer.renderer)
         # self.debug(f"Rendering : renderer set")
         # rl.triggerRepaint()
         self.debug(f"Rendering : trigger repaint")
