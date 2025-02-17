@@ -570,7 +570,7 @@ class QSAProject:
 
         # symbology
         renderer = rl.renderer() #RasterSymbologyRenderer(symbology["type"])
-        renderer.load(symbology["properties"])
+        #renderer.load(symbology["properties"])
 
         self.__process_renderering(rl, rendering)
         self.debug(f"Rendering : start")
