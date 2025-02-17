@@ -106,11 +106,11 @@ class RasterSymbologyRenderer:
                         self._refresh_min_max_singlebandpseudocolor(layer)
 
     def setCumulativeCut(self, layer: QgsRasterLayer, max_cut: float, min_cut: float) -> None:
-        min_max = QgsRasterMinMaxOrigin()
-        min_max.setLimits(QgsRasterMinMaxOrigin.Limits.CumulativeCut)
-        min_max.setCumulativeCutUpper(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_UPPER)
-        min_max.setCumulativeCutLower(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_LOWER)
-        layer.renderer().cumulativeCut(1,QgsRasterMinMaxOrigin.CUMULATIVE_CUT_LOWER,QgsRasterMinMaxOrigin.CUMULATIVE_CUT_UPPER)
+        # min_max = QgsRasterMinMaxOrigin()
+        # min_max.setLimits(QgsRasterMinMaxOrigin.Limits.CumulativeCut)
+        # min_max.setCumulativeCutUpper(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_UPPER)
+        # min_max.setCumulativeCutLower(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_LOWER)
+        layer.renderer().cumulativeCut(1,10.,90.)
         
         # layer.renderer().setMinMaxOrigin(ce)
         
