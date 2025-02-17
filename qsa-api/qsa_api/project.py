@@ -579,7 +579,9 @@ class QSAProject:
             QgsRasterMinMaxOrigin.Limits.CumulativeCut,
         )
         self.debug(f"Rendering : contrast enhancement set")
-        renderer.setCumulativeCut(rl, 10.)
+        self.debug(f"max cumulative cut : 90")
+        self.debug(f"min cumulative cut : 10")
+        renderer.setCumulativeCut(rl, 90., 10.)
         self.debug(f"Rendering : cumulative cut set")
         rl.setRenderer(renderer.renderer)
         self.debug(f"Rendering : renderer set")
