@@ -585,7 +585,7 @@ class QSAProject:
         renderer.setCumulativeCut(rl, (90.) / 100, (10.) / 100)
         self.debug(f"Rendering : cumulative cut set")
         
-        rl.renderer().renderer().cumulativeCut(1,10.,90.)
+        rl.renderer().cumulativeCut(1,10.,90.)
         # rl.setRenderer(renderer.renderer)
         # self.debug(f"Rendering : renderer set")
         # rl.triggerRepaint()
