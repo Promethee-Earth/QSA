@@ -580,8 +580,8 @@ class QSAProject:
         )
         self.debug(f"Rendering : contrast enhancement set")
         
-        self.debug(f"max cumulative cut : 90")
-        self.debug(f"min cumulative cut : 10")
+        self.debug(f"max cumulative cut : .90")
+        self.debug(f"min cumulative cut : .10")
         renderer.setCumulativeCut(rl, (90.) / 100, (10.) / 100)
         self.debug(f"Rendering : cumulative cut set")
         rl.setRenderer(renderer.renderer)
