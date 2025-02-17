@@ -586,7 +586,7 @@ class QSAProject:
         rl.setRenderer(renderer.renderer)
         # self.debug(f"Rendering : renderer set")
         # rl.triggerRepaint()
-        rl.renderer().cumulativeCut(0, 0.02, 0.98)
+        rl.renderer().cumulativeCut(0, 0.5, 0.8)
         min_max_origin = QgsRasterMinMaxOrigin()
         min_max_origin.setStatistics(QgsRasterMinMaxOrigin.CumulativeCut)
         min_max_origin.setCumulativeCutLower(2)
