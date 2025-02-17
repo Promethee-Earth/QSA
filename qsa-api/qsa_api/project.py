@@ -582,9 +582,16 @@ class QSAProject:
         
         self.debug(f"max cumulative cut : .90")
         self.debug(f"min cumulative cut : .10")
-        renderer.setCumulativeCut(rl, 50., 80.)
+        renderer.setCumulativeCut(rl, (90.) / 100, (10.) / 100)
+        rr = rl.renderer()
+        min_max = QgsRasterMinMaxOrigin()
+        min_max.setLimits(QgsRasterMinMaxOrigin.Limits.CumulativeCut)
+        min_max.setCumulativeCutUpper(50.)
+        min_max.setCumulativeCutLower(80.)
+        rr.setMinMaxOrigin(min_max)
+        
         self.debug(f"Rendering : cumulative cut set")
-        rl.setRenderer(renderer.renderer)
+        rl.setRenderer(rr)
         # self.debug(f"Rendering : renderer set")
         # rl.triggerRepaint()
         self.debug(f"Rendering : trigger repaint")
