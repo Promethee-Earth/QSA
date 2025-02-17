@@ -107,7 +107,7 @@ class RasterSymbologyRenderer:
 
     def setCumulativeCut(self, layer: QgsRasterLayer, percentiles: float) -> None:
         ce = QgsRasterMinMaxOrigin()
-        ce.setCumulativeCutUpper(percentiles)
+        ce.setCumulativeCutUpper(100 - percentiles)
         ce.setCumulativeCutLower(percentiles)
         layer.renderer().setMinMaxOrigin(ce)
         
