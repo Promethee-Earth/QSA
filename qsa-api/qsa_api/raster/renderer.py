@@ -139,16 +139,19 @@ class RasterSymbologyRenderer:
             case self.Color.RED:
                 contrast_enhancement.setMinimumValue(self.red_min)
                 contrast_enhancement.setMaximumValue(self.red_max)
+                QgsMultiBandColorRenderer(layer.renderer()).setRedContrastEnhancement(contrast_enhancement)
             case self.Color.GREEN:
                 contrast_enhancement.setMinimumValue(self.green_min)
                 contrast_enhancement.setMaximumValue(self.green_max)
+                QgsMultiBandColorRenderer(layer.renderer()).setGreenContrastEnhancement(contrast_enhancement)
             case self.Color.BLUE:
                 contrast_enhancement.setMinimumValue(self.blue_min)
                 contrast_enhancement.setMaximumValue(self.blue_max)
+                QgsMultiBandColorRenderer(layer.renderer()).setBlueContrastEnhancement(contrast_enhancement)
             case self.Color.GRAY:      
                 contrast_enhancement.setMinimumValue(self.gray_min)
                 contrast_enhancement.setMaximumValue(self.gray_max)
-        layer.renderer().setContrastEnhancement(contrast_enhancement)
+                QgsSingleBandGrayRenderer(layer.renderer()).setContrastEnhancement(contrast_enhancement)
         
     def setUserDefinedMinMax(self, layer: QgsRasterLayer) -> None:
         if self.type == RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY:
