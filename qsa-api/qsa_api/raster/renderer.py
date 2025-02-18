@@ -86,6 +86,8 @@ class RasterSymbologyRenderer:
         if "contrast_enhancement" in properties:
             self._load_contrast_enhancement(properties["contrast_enhancement"])
 
+        props = {"algorithm": "CumulativeCut", "limits_min_max": "CumulativeCut" }           
+        self._load_contrast_enhancement(props)
         if self.type == RasterSymbologyRenderer.Type.MULTI_BAND_COLOR:
             self._load_multibandcolor_properties(properties)
         elif self.type == RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY:
@@ -118,15 +120,18 @@ class RasterSymbologyRenderer:
         min_max.setCumulativeCutLower(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_LOWER)
         match self.type:
             case RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR:
-                self._setMinMax(layer.renderer().contrastEnhancement(), layer, self.Color.GRAY)
-                layer.renderer().setMinMaxOrigin(min_max)
+                raise ValueError("Cumulative cut is not supported for single band pseudocolor renderer")
             case RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY:
-                self._setMinMax(layer.renderer().contrastEnhancement(), layer, self.Color.GRAY)
+                ce = QgsSingleBandGrayRenderer(layer.renderer()).contrastEnhancement()
+                self._setMinMax(ce, layer, self.Color.GRAY)
                 layer.renderer().setMinMaxOrigin(min_max)
             case RasterSymbologyRenderer.Type.MULTI_BAND_COLOR:
-                self._setMinMax(layer.renderer().redContrastEnhancement(), layer, self.Color.RED)
-                self._setMinMax(layer.renderer().greenContrastEnhancement(), layer, self.Color.GREEN)
-                self._setMinMax(layer.renderer().blueContrastEnhancement(), layer, self.Color.BLUE)
+                ce_red = QgsMultiBandColorRenderer(layer.renderer()).redContrastEnhancement()
+                ce_green = QgsMultiBandColorRenderer(layer.renderer()).greenContrastEnhancement()
+                ce_blue = QgsMultiBandColorRenderer(layer.renderer()).blueContrastEnhancement()
+                self._setMinMax(ce_red, layer, self.Color.RED)
+                self._setMinMax(ce_green, layer, self.Color.GREEN)
+                self._setMinMax(ce_blue, layer, self.Color.BLUE)
                 layer.renderer().setMinMaxOrigin(min_max)
         
     def _setMinMax(self, contrast_enhancement: QgsContrastEnhancement, layer: QgsRasterLayer, color: Color) -> None:
