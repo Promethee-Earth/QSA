@@ -570,8 +570,7 @@ class QSAProject:
 
         # symbology
         self.debug(f"Raster symbology : {symbology}")
-        # renderer = RasterSymbologyRenderer(symbology["type"])
-        renderer = RasterSymbologyRenderer("SINGLE_BAND_GRAY")
+        renderer = RasterSymbologyRenderer(symbology["type"])
         renderer.load(symbology["properties"])
         self.debug(f"Contrast algo : {renderer.contrast_algorithm}") 
         self.debug(f"Contrast limits : {renderer.contrast_limits}")
