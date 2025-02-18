@@ -1,13 +1,15 @@
 from typing import Generic, TypeVar, Union
+from enum import Enum
 
 T = TypeVar("T")
 E = TypeVar("E")
+
 
 class Result(Generic[T, E]):
     def __init__(self, value: Union[T, None] = None, error: Union[E, None] = None):
         self.value = value
         self.error = error
-        
+
     def is_ok(self) -> bool:
         return self.error is None
 
@@ -27,6 +29,16 @@ class Result(Generic[T, E]):
             return self.error
         raise ValueError("Called unwrap_err() on an Ok")
 
+    def map(self, f: callable[[T], T]) -> "Result[T, E]":
+        if self.is_ok():
+            return Result.Ok(f(self.value))
+        return self
+
+    def map_error(self, f: callable[[E], E]) -> "Result[T, E]":
+        if self.is_err():
+            return Result.Err(f(self.error))
+        return self
+
     @staticmethod
     def Ok(value: T) -> "Result[T, E]":
         return Result(value=value)
@@ -34,45 +46,36 @@ class Result(Generic[T, E]):
     @staticmethod
     def Err(error: E) -> "Result[T, E]":
         return Result(error=error)
-    
+
+
 class Ok(Result[T, E]):
     def __init__(self, value: T):
         self.value = value
 
+
 class Err(Result[T, E]):
     def __init__(self, error: E):
         self.error = error
-        
-        
-class DivisionByZeroError(Err[str, str]):
-    def __init__(self):
-        super().__init__("Division by zero")
 
-class NegativeNumberError(Err[str, str]):
-    def __init__(self, number: float):
-        super().__init__(f"Negative number not allowed: {number}")
-        self.number = number
-        
-def division(a: float, b: float) -> Result[float, Err[str, str]]:
+class DivisionError(Enum):
+    DIVISION_BY_ZERO = "Division par zéro"
+    NEGATIVE_NUMBER = "Nombre négatif non autorisé"
+
+Result = Union[float, DivisionError]
+
+def division(a: float, b: float) -> Result:
     if b == 0:
-        return DivisionByZeroError()
+        return Result.Err(DivisionError.DIVISION_BY_ZERO)
     if a < 0 or b < 0:
-        return NegativeNumberError(a if a < 0 else b)
+        return Result.Err(DivisionError.NEGATIVE_NUMBER)
     return Ok(a / b)
 
-result = division(10, 2)
-# match result:
-#     case Ok(value):
-#         print(f"Result: {value}")
-#     case Err(error):
-#         print(f"Error: {error}")
+
+result = division(10, 2).map(
+    lambda x: x * 2).map_error(DivisionError.NEGATIVE_NUMBER)
 
 match result:
     case Ok(value):
         print(f"Résultat: {value}")
-    case DivisionByZeroError():
-        print("Erreur: Division par zéro détectée")
-    case NegativeNumberError(num):
-        print(f"Erreur: Nombre négatif détecté ({num})")
     case Err(error):
-        print(f"Erreur inconnue: {error}")
+        print(f"Erreur: {error}")
