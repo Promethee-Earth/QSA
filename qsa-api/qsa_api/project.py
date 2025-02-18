@@ -4,7 +4,7 @@ import shutil
 import sqlite3
 import sys
 from pathlib import Path
-
+from coreutils import Result
 from qgis.core import (
     Qgis,
     QgsApplication,

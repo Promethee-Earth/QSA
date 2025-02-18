@@ -17,7 +17,7 @@ class Some(Option[T]):
 
 class None_(Option[T]):
     def __repr__(self):
-        return None
+        return "None"
 
 
 def find_user(user_id: int) -> Option[str]:
