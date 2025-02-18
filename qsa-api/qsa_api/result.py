@@ -35,3 +35,23 @@ class Result(Generic[T, E]):
     def Err(error: E) -> "Result[T, E]":
         return Result(error=error)
     
+class Ok(Result[T, E]):
+    def __init__(self, value: T):
+        self.value = value
+
+class Err(Result[T, E]):
+    def __init__(self, error: E):
+        self.error = error
+        
+        
+def division(a: float, b: float) -> Result[float, str]:
+    if b == 0:
+        return Err("Division by zero")
+    return Ok(a / b)
+
+result = division(10, 2)
+match result:
+    case Ok(value):
+        print(f"Result: {value}")
+    case Err(error):
+        print(f"Error: {error}")
