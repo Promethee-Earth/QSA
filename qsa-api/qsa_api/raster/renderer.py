@@ -88,12 +88,12 @@ class RasterSymbologyRenderer:
 
         props = {"algorithm": "CumulativeCut", "limits_min_max": "CumulativeCut" }           
         self._load_contrast_enhancement(props)
-        if self.type == RasterSymbologyRenderer.Type.MULTI_BAND_COLOR:
-            self._load_multibandcolor_properties(properties)
-        elif self.type == RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY:
-            self._load_singlebandgray_properties(properties)
-        elif self.type == RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR:
-            self._load_singlebandpseudocolor_properties(properties)
+        # if self.type == RasterSymbologyRenderer.Type.MULTI_BAND_COLOR:
+        #     self._load_multibandcolor_properties(properties)
+        # elif self.type == RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY:
+        #     self._load_singlebandgray_properties(properties)
+        # elif self.type == RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR:
+        #     self._load_singlebandpseudocolor_properties(properties)
 
         return True, ""
 
