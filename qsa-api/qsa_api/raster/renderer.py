@@ -23,6 +23,12 @@ ContrastEnhancementAlgorithm = (
 
 
 class RasterSymbologyRenderer:
+    class Color(Enum):
+        GRAY = 0
+        RED = 1
+        GREEN = 2
+        BLUE = 3
+    
     class Type(Enum):
         SINGLE_BAND_GRAY = QgsSingleBandGrayRenderer(None, 1).type()
         SINGLE_BAND_PSEUDOCOLOR = QgsSingleBandPseudoColorRenderer(
