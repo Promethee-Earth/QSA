@@ -120,7 +120,6 @@ class RasterSymbologyRenderer:
         min_max.setCumulativeCutLower(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_LOWER)
         match self.type:
             case RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR:
-                ce = QgsSingleBandPseudoColorRenderer(layer.renderer()).
                 raise ValueError("Cumulative cut is not supported for single band pseudocolor renderer")
             case RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY:
                 ce = QgsSingleBandGrayRenderer(layer.renderer()).contrastEnhancement()
