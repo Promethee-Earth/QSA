@@ -498,6 +498,8 @@ class RasterSymbologyRenderer:
 
                 if "max" in red:
                     self.red_max=float(red["max"])
+        else:
+            raise ValueError("Red band is missing in multibandcolor renderer")
 
         if "blue" in properties:
             blue=properties["blue"]
@@ -509,6 +511,8 @@ class RasterSymbologyRenderer:
 
                 if "max" in blue:
                     self.blue_max=float(blue["max"])
+        else:
+            raise ValueError("Blue band is missing in multibandcolor renderer")
 
         if "green" in properties:
             green=properties["green"]
@@ -520,6 +524,8 @@ class RasterSymbologyRenderer:
 
                 if "max" in green:
                     self.green_max=float(green["max"])
+        else:
+            raise ValueError("Green band is missing in multibandcolor renderer")
 
     def _load_singlebandgray_properties(self, properties: dict) -> None:
         if "gray" in properties:

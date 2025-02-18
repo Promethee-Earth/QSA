@@ -44,14 +44,35 @@ class Err(Result[T, E]):
         self.error = error
         
         
-def division(a: float, b: float) -> Result[float, str]:
+class DivisionByZeroError(Err[str, str]):
+    def __init__(self):
+        super().__init__("Division by zero")
+
+class NegativeNumberError(Err[str, str]):
+    def __init__(self, number: float):
+        super().__init__(f"Negative number not allowed: {number}")
+        self.number = number
+        
+def division(a: float, b: float) -> Result[float, Err[str, str]]:
     if b == 0:
-        return Err("Division by zero")
+        return DivisionByZeroError()
+    if a < 0 or b < 0:
+        return NegativeNumberError(a if a < 0 else b)
     return Ok(a / b)
 
 result = division(10, 2)
+# match result:
+#     case Ok(value):
+#         print(f"Result: {value}")
+#     case Err(error):
+#         print(f"Error: {error}")
+
 match result:
     case Ok(value):
-        print(f"Result: {value}")
+        print(f"Résultat: {value}")
+    case DivisionByZeroError():
+        print("Erreur: Division par zéro détectée")
+    case NegativeNumberError(num):
+        print(f"Erreur: Nombre négatif détecté ({num})")
     case Err(error):
-        print(f"Error: {error}")
+        print(f"Erreur inconnue: {error}")
