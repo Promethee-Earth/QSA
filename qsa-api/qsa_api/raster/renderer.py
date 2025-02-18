@@ -117,12 +117,17 @@ class RasterSymbologyRenderer:
         min_max.setCumulativeCutUpper(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_UPPER)
         min_max.setCumulativeCutLower(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_LOWER)
         match self.type:
+            case RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR:
+                self._setMinMax(layer.renderer().contrastEnhancement(), layer, self.Color.GRAY)
+                layer.renderer().setMinMaxOrigin(min_max)
             case RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY:
                 self._setMinMax(layer.renderer().contrastEnhancement(), layer, self.Color.GRAY)
-                layer.renderer().setCumulativeCutMinMax(min_cut, max_cut)
                 layer.renderer().setMinMaxOrigin(min_max)
             case RasterSymbologyRenderer.Type.MULTI_BAND_COLOR:
-                return
+                self._setMinMax(layer.renderer().redContrastEnhancement(), layer, self.Color.RED)
+                self._setMinMax(layer.renderer().greenContrastEnhancement(), layer, self.Color.GREEN)
+                self._setMinMax(layer.renderer().blueContrastEnhancement(), layer, self.Color.BLUE)
+                layer.renderer().setMinMaxOrigin(min_max)
         
     def _setMinMax(self, contrast_enhancement: QgsContrastEnhancement, layer: QgsRasterLayer, color: Color) -> None:
         match color:
