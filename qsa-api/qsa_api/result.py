@@ -34,3 +34,4 @@ class Result(Generic[T, E]):
     @staticmethod
     def Err(error: E) -> "Result[T, E]":
         return Result(error=error)
+    
