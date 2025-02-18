@@ -1,0 +1,9 @@
+services:
+  qsa-dev:
+    build:
+      context: .
+      dockerfile: dev.Dockerfile
+    volumes:
+      - .:/app
+    tty: true
+

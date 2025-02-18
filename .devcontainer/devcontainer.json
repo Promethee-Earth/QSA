@@ -1,0 +1,29 @@
+{
+    "name": "QSA Dev Container",
+    "build": {
+        "dockerfile": "../dev.Dockerfile",
+        "context": ".."
+    },
+    "runArgs": [
+        "--name=qsa-dev-container",
+        // "-p",
+        // "5000:5000",
+        // "-p",
+        // "5678:5678"
+    ],
+    "customizations": {
+        "vscode": {
+            "settings": {
+                "terminal.integrated.shell.linux": "/bin/bash",
+                "python.pythonPath": "/usr/local/bin/python",
+                "python.linting.pylintEnabled": true,
+                "python.defaultInterpreterPath": "venv/bin/python3.12"
+            },
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylint"
+            ]
+        }
+    },
+    "postCreateCommand": "python3 -m venv --system-site-packages venv && . venv/bin/activate && pip install pylint && pip install -r requirements.txt"
+}

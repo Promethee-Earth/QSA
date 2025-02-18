@@ -1,0 +1,75 @@
+version: '2'
+services:
+  nginx:
+    image: nginx:latest
+    restart: always
+    volumes:
+      - ./nginx-proxy.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - mapproxy
+    ports:
+      - "{{ nginx_port }}:80"
+  qgisserver:
+    image: qgis/qgis-server:3.40.2-jammy
+    restart: always
+    volumes:
+      - ./qsa/qsa:/qsa
+      - ./qgisserver/data:/io/data
+      - ./qgisserver/plugins:/io/plugins
+      - ./fastcgi_params:/etc/nginx/fastcgi_params
+      - {{ prefix }}/pg_service.conf:/etc/postgresql-common/pg_service.conf
+    environment:
+      - QGIS_USER=1000
+      - QGIS_SERVER_LOG_LEVEL=0
+      - QGIS_SERVER_PROJECT_CACHE_STRATEGY=periodic
+      - QSA_HOST=qsa
+      - QSA_PORT=5051
+    privileged: true
+  mapproxy:
+    image: hti/mapproxy
+    restart: always
+    volumes:
+      - ./mapproxy/:/multi_mapproxy
+    ports:
+      - "{{ mapproxy_port }}:8080"
+    environment:
+      - MULTI_MAPPROXY=true
+      - PRODUCTION=true
+      - PROCESSES=16
+      - CHEAPER=4
+      - THREADS=2
+  qsa:
+    image: hti/qsa
+    restart: always
+    environment:
+      - QSA_LOGLEVEL=DEBUG
+      - QSA_QGISSERVER_URL=http://qgisserver/ogc/
+      - QSA_QGISSERVER_PROJECTS_DIR=/qgis
+      - QSA_QGISSERVER_PROJECTS_PSQL_SERVICE=qsa
+      - QSA_QGISSERVER_PROJECTS_PSQL_DBNAME=qsa
+      - QSA_QGISSERVER_PROJECTS_PSQL_USER=qsa
+      - QSA_QGISSERVER_PROJECTS_PSQL_PASSWORD=qsa
+      - QSA_QGISSERVER_PROJECTS_PSQL_HOST=postgres
+      - QSA_QGISSERVER_PROJECTS_PSQL_PORT=5432
+      - QSA_MAPPROXY_PROJECTS_DIR=/mapproxy
+      - QSA_QGISSERVER_MONITORING_PORT=5051
+    volumes:
+      - {{ prefix }}/qsa/qsa.yml:/qsa.yml
+      - {{ prefix }}/qgisserver/data/:/qgis
+      - {{ prefix }}/mapproxy:/mapproxy
+      - {{ prefix }}/.aws:/var/lib/qgis/.aws
+      - {{ prefix }}/pg_service.conf:/root/.pg_service.conf
+    ports:
+      - "{{ qsa_port }}:5000"
+  postgres:
+    image: postgres:14-alpine
+    restart: always
+    volumes:
+      - {{ prefix }}/postgres_data:/var/lib/postgresql/data
+    ports:
+      - 5433:5432
+    command: ["postgres", "-c", "log_statement=all"]
+    environment:
+      - POSTGRES_PASSWORD=qsa
+      - POSTGRES_USER=qsa
+      - POSTGRES_DB=qsa

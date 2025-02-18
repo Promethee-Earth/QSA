@@ -90,7 +90,7 @@ class ProgressPercentage:
             sys.stdout.flush()
 
 
-def s3_bucket_upload(bucket: str, source: str, dest: str) -> (bool, str):
+def s3_bucket_upload(bucket: str, source: str, dest: str) -> (bool | str):
 
     size = float(os.path.getsize(source) >> 20)
 
