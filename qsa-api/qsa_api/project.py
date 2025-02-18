@@ -576,9 +576,7 @@ class QSAProject:
 
         self.__process_renderering(rl, rendering)
         
-        self.debug(f"Rendering : start: {renderer.renderer.type()}")
         self.debug(f"Rendering : contrast enhancement set")
-        
         self.debug(f"max cumulative cut : .90")
         self.debug(f"min cumulative cut : .10")
         
