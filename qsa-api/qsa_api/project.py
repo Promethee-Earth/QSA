@@ -574,17 +574,14 @@ class QSAProject:
         renderer.load(symbology["properties"])
         self.debug(f"Contrast algo : {renderer.contrast_algorithm}") 
         self.debug(f"Contrast limits : {renderer.contrast_limits}")
+        self.debug(f"Blue band : {renderer.blue_max}, {renderer.blue_min}")
+        self.debug(f"Green band : {renderer.green_max}, {renderer.green_min}")
+        self.debug(f"Red band : {renderer.red_max}, {renderer.red_min}")
 
         self.__process_renderering(rl, rendering)
-        
-        self.debug(f"Rendering : contrast enhancement set")
-        self.debug(f"max cumulative cut : .90")
-        self.debug(f"min cumulative cut : .10")
-        
+
         rl.setRenderer(renderer.renderer)
         rl.setContrastEnhancement(renderer.contrast_algorithm, renderer.contrast_limits)
-        self.debug(f"Rendering : contrast enhancement set: {renderer.contrast_algorithm}")
-        self.debug(f"Rendering : user defined limits: {renderer.contrast_limits}")
         renderer.setCumulativeCut(rl, (90.) / 100, (10.) / 100)
         self.debug(f"Rendering : cumulative cut set")
         # rl.setRenderer(renderer.renderer)
