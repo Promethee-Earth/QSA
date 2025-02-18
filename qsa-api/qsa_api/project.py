@@ -584,7 +584,7 @@ class QSAProject:
         self.debug(f"min cumulative cut : .10")
         renderer.setCumulativeCut(rl, (90.) / 100, (10.) / 100)
         self.debug(f"Rendering : cumulative cut set")
-        rl.setRenderer(renderer.renderer)
+        # rl.setRenderer(renderer.renderer)
         self.debug(f"Rendering : trigger repaint")
         path = self._qgis_project_dir / f"{name}.qml"
         rl.saveNamedStyle(
