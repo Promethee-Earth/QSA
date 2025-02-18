@@ -569,12 +569,14 @@ class QSAProject:
         rl = QgsRasterLayer(tif.as_posix(), "", "gdal")
 
         # symbology
-        renderer = RasterSymbologyRenderer(symbology["type"])
-        renderer.load(symbology["properties"])
+        self.debug(f"Raster symbology : {symbology}")
+        # renderer = RasterSymbologyRenderer(symbology["type"])
+        renderer = RasterSymbologyRenderer("SINGLE_BAND_GRAY")
+        renderer.load(symbology["properties"])      
 
         self.__process_renderering(rl, rendering)
         
-        self.debug(f"Rendering : start")
+        self.debug(f"Rendering : start: {renderer.renderer.type()}")
         self.debug(f"Rendering : contrast enhancement set")
         
         self.debug(f"max cumulative cut : .90")

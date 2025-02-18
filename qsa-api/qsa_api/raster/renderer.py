@@ -58,7 +58,7 @@ class RasterSymbologyRenderer:
             name == RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR.value
         ):
             self.renderer = QgsSingleBandPseudoColorRenderer(None, 1)
-
+        
     @property
     def type(self):
         if (
@@ -120,15 +120,16 @@ class RasterSymbologyRenderer:
         min_max.setCumulativeCutLower(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_LOWER)
         match self.type:
             case RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR:
+                ce = QgsSingleBandPseudoColorRenderer(layer.renderer()).
                 raise ValueError("Cumulative cut is not supported for single band pseudocolor renderer")
             case RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY:
                 ce = QgsSingleBandGrayRenderer(layer.renderer()).contrastEnhancement()
                 self._setMinMax(ce, layer, self.Color.GRAY)
                 layer.renderer().setMinMaxOrigin(min_max)
             case RasterSymbologyRenderer.Type.MULTI_BAND_COLOR:
-                ce_red = QgsMultiBandColorRenderer(layer.renderer()).redContrastEnhancement()
-                ce_green = QgsMultiBandColorRenderer(layer.renderer()).greenContrastEnhancement()
-                ce_blue = QgsMultiBandColorRenderer(layer.renderer()).blueContrastEnhancement()
+                ce_red = QgsContrastEnhancement(layer.renderer().redContrastEnhancement())
+                ce_green = QgsContrastEnhancement(layer.renderer().greenContrastEnhancement())
+                ce_blue = QgsContrastEnhancement(layer.renderer().blueContrastEnhancement())
                 self._setMinMax(ce_red, layer, self.Color.RED)
                 self._setMinMax(ce_green, layer, self.Color.GREEN)
                 self._setMinMax(ce_blue, layer, self.Color.BLUE)
@@ -139,15 +140,18 @@ class RasterSymbologyRenderer:
             case self.Color.RED:
                 contrast_enhancement.setMinimumValue(self.red_min)
                 contrast_enhancement.setMaximumValue(self.red_max)
-                QgsMultiBandColorRenderer(layer.renderer()).setRedContrastEnhancement(contrast_enhancement)
+                # QgsMultiBandColorRenderer(layer.renderer()).setRedContrastEnhancement(contrast_enhancement)
+                layer.renderer().setRedContrastEnhancement(contrast_enhancement)
             case self.Color.GREEN:
                 contrast_enhancement.setMinimumValue(self.green_min)
                 contrast_enhancement.setMaximumValue(self.green_max)
-                QgsMultiBandColorRenderer(layer.renderer()).setGreenContrastEnhancement(contrast_enhancement)
+                # QgsMultiBandColorRenderer(layer.renderer()).setGreenContrastEnhancement(contrast_enhancement)
+                layer.renderer().setGreenContrastEnhancement(contrast_enhancement)
             case self.Color.BLUE:
                 contrast_enhancement.setMinimumValue(self.blue_min)
                 contrast_enhancement.setMaximumValue(self.blue_max)
-                QgsMultiBandColorRenderer(layer.renderer()).setBlueContrastEnhancement(contrast_enhancement)
+                # QgsMultiBandColorRenderer(layer.renderer()).setBlueContrastEnhancement(contrast_enhancement)
+                layer.renderer().setBlueContrastEnhancement(contrast_enhancement)
             case self.Color.GRAY:      
                 contrast_enhancement.setMinimumValue(self.gray_min)
                 contrast_enhancement.setMaximumValue(self.gray_max)
