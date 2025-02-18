@@ -1,10 +1,53 @@
 from typing import Generic, TypeVar
 
 T = TypeVar("T")
+U = TypeVar("U")
 
 
 class Option(Generic[T]):
-    pass
+    """Generic Option type with Some and None variants"""
+    
+    def __init__(self):
+        super().__init__()
+
+    def is_some(self) -> bool:
+        """Check if the Option is a Some variant"""
+        return isinstance(self, Some)
+    
+    def is_none(self) -> bool:
+        """Check if the Option is a None variant"""
+        return isinstance(self, None_)
+    
+    def unwrap(self) -> T:
+        """Return the value of a Some variant or raise an exception"""
+        if self.is_some():
+            return self.value
+        raise ValueError("Called unwrap() on a None")
+    
+    def unwrap_or(self, default: T) -> T:
+        """Return the value of a Some variant or a default"""
+        return self.value if self.is_some() else default
+    
+    def map(self, f: callable[[T], U]) -> "Option[U]":
+        """Apply a function to the value of a Some variant"""
+        if self.is_some():
+            return Some(f(self.value))
+        return self
+    
+    def and_then(self, f: callable[[T], "Option[U]"]) -> "Option[U]":
+        """Pipe the value of a Some variant into a function"""
+        if self.is_some():
+            return f(self.value)
+        return self
+    
+    def __repr__(self):
+        raise NotImplementedError
+    
+    def __eq__(self, other) -> bool:
+        if isinstance(other, Some) and self.is_some():
+            return self.value == other.value
+        return False
+    
 
 
 class Some(Option[T]):
