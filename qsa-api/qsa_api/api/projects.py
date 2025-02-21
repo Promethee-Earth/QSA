@@ -183,7 +183,7 @@ def project_layer_update_style(name, layer_name):
 
             current = data["current"]
             style_name = data["name"]
-            rc, msg = project.layer_update_style(
+            rc, msg = project.update_style(
                 layer_name, style_name, current
             )
             if not rc:
@@ -248,7 +248,6 @@ def project_add_style(name):
                 "rendering": {"type": "object"},
             },
         }
-
         psql_schema = request.args.get("schema", default="public")
         project = QSAProject(name, psql_schema)
         if project.exists():

@@ -1,5 +1,6 @@
 # coding: utf8
 
+from enum import Enum
 import sys
 import shutil
 import sqlite3
@@ -36,9 +37,16 @@ from .mapproxy import QSAMapProxy
 from .vector import VectorSymbologyRenderer
 from .utils import StorageBackend, config, logger
 from .raster import RasterSymbologyRenderer, RasterOverview
+from .raster import RasterSerializer
+from wrappers import Result, Ok, Err
 
 
 RENDERER_TAG_NAME = "renderer-v2"  # constant from core/symbology/renderer.h
+
+
+class QSAProjectErr(Enum):
+    MISSING_TYPE = "`type` is missing in `symbology`",
+    MISSING_PROPERTIES = "`properties` is missing in `symbology`",
 
 
 class QSAProject:
@@ -93,7 +101,7 @@ class QSAProject:
                 .projectStorageRegistry()
                 .projectStorageFromType("postgresql")
             )
-            for pname in storage.listProjects(uri): 
+            for pname in storage.listProjects(uri):
                 p.append(QSAProject(pname, schema))
 
         return p
@@ -109,7 +117,8 @@ class QSAProject:
     @property
     def project(self) -> QgsProject:
         project = QgsProject()
-        project.read(self._qgis_project_uri, Qgis.ProjectReadFlag.DontResolveLayers)
+        project.read(self._qgis_project_uri,
+                     Qgis.ProjectReadFlag.DontResolveLayers)
         return project
 
     @property
@@ -147,12 +156,12 @@ class QSAProject:
 
         return m
 
-    def cache_metadata(self) -> (dict, str):
+    def cache_metadata(self) -> (dict | str):
         if self._mapproxy_enabled:
             return QSAMapProxy(self.name).metadata(), ""
         return {}, "Cache is disabled"
 
-    def cache_reset(self) -> (bool, str):
+    def cache_reset(self) -> (bool | str):
         if self._mapproxy_enabled:
             mp = QSAMapProxy(self.name)
             rc, err = mp.read()
@@ -187,7 +196,7 @@ class QSAProject:
         con.close()
         return default_style
 
-    def style(self, name: str) -> (dict, str):
+    def style(self, name: str) -> (dict | str):
         if name not in self.styles:
             return {}, "Invalid style"
 
@@ -196,7 +205,7 @@ class QSAProject:
         if VectorSymbologyRenderer.style_is_vector(path):
             return VectorSymbologyRenderer.style_to_json(path)
         else:
-            return RasterSymbologyRenderer.style_to_json(path)
+            return RasterSerializer.style_to_json(path)
 
     def style_update(self, geometry: str, style: str) -> None:
         con = sqlite3.connect(self.sqlite_db.as_posix())
@@ -219,7 +228,7 @@ class QSAProject:
         flags = Qgis.ProjectReadFlags()
         flags |= Qgis.ProjectReadFlag.ForceReadOnlyLayers
         project = QgsProject()
-        project.read(self._qgis_project_uri,flags)
+        project.read(self._qgis_project_uri, flags)
 
         layers = project.mapLayersByName(name)
         if layers:
@@ -233,7 +242,8 @@ class QSAProject:
                 infos["geometry"] = QgsWkbTypes.displayString(layer.wkbType())
             elif layer.type() == Qgis.LayerType.Raster:
                 infos["bands"] = layer.bandCount()
-                infos["data_type"] = layer.dataProvider().dataType(1).name.lower()
+                infos["data_type"] = layer.dataProvider().dataType(
+                    1).name.lower()
 
             infos["source"] = layer.source()
             infos["crs"] = layer.crs().authid()
@@ -245,66 +255,14 @@ class QSAProject:
             return infos
         return {}
 
-    def layer_update_style(
-        self, layer_name: str, style_name: str, current: bool
-    ) -> (bool, str):
-        # if layer_name not in self.layers:
-        #     return False, f"Layer '{layer_name}' does not exist"
-
-        # if style_name != "default" and style_name not in self.styles:
-        #     return False, f"Style '{style_name}' does not exist"
-                
-        self.debug("Start for clearing MapProxy cache")
-        mp = QSAMapProxy(self.name)
-        mp.clear_cache(layer_name)
-        
-        self.debug("clear_cache is finish")
-     
-        project = QgsProject()
-        project.read(self._qgis_project_uri)
-
-        self.debug(f"project.read : {len(project.mapLayers(False))}")
-        
-        for a in project.mapLayers(False):
-            self.debug(f"layer_name : {a}")
-        
-        self.debug(f"Layer name use : {layer_name.strip()}")
-        style_path = self._qgis_project_dir / f"{style_name}.qml"
-        layer = project.mapLayersByName(layer_name.strip())[0]
-
-        self.debug("project.mapLayersByName")
-        if style_name not in layer.styleManager().styles():
-            self.debug(f"Add new style {style_name} in style manager")
-            l = layer.clone()
-            l.loadNamedStyle(style_path.as_posix())  # set "default" style
-
-            layer.styleManager().addStyle(
-                style_name, l.styleManager().style("default")
-            )
-
-        if current:
-            self.debug(f"Set default style {style_name}")
-            layer.styleManager().setCurrentStyle(style_name)
-
-            # refresh min/max for the current layer if necessary
-            # (because the style is built on an empty geotiff)
-            if layer.type() == QgsMapLayer.RasterLayer:
-                self.debug("Refresh symbology renderer min/max")
-                renderer = RasterSymbologyRenderer(layer.renderer().type())
-                renderer.refresh_min_max(layer)
-
-        self.debug("Write project")
-        project.write()
-
-        return True, ""
-
     def layer_exists(self, name: str) -> bool:
         return bool(self.layer(name))
 
     def remove_layer(self, name: str) -> bool:
         # remove layer in qgis project
         project = QgsProject()
-        project.read(self._qgis_project_uri, Qgis.ProjectReadFlag.DontResolveLayers)
+        project.read(self._qgis_project_uri,
+                     Qgis.ProjectReadFlag.DontResolveLayers)
 
         ids = []
         for layer in project.mapLayersByName(name):
@@ -352,7 +310,7 @@ class QSAProject:
 
             return self.name in projects and self._qgis_projects_dir().exists()
 
-    def create(self, author: str) -> (bool, str):
+    def create(self, author: str) -> (bool | str):
         if self.exists():
             return False
 
@@ -371,7 +329,7 @@ class QSAProject:
         project.setCrs(crs)
 
         self.debug("Write QGIS project")
-      
+
         rc = project.write(self._qgis_project_uri)
         self.debug(f"Create Project ok : {rc}")
         # create mapproxy config file
@@ -415,7 +373,7 @@ class QSAProject:
         epsg_code: int,
         overview: bool,
         datetime: QDateTime | None,
-    ) -> (bool, str):
+    ) -> (bool | str):
         t = self._layer_type(layer_type)
         if t is None:
             return False, "Invalid layer type"
@@ -434,12 +392,13 @@ class QSAProject:
             host = config().qgisserver_projects_psql_host
             port = config().qgisserver_projects_psql_port
             tableName = datasource
-            if("wkb_geometry" in datasource):
-                tableName = datasource.split(".")[1].replace('"',"").replace("(wkb_geometry)","").strip()
-                
-                uri = QgsDataSourceUri()    
+            if ("wkb_geometry" in datasource):
+                tableName = datasource.split(".")[1].replace(
+                    '"', "").replace("(wkb_geometry)", "").strip()
+
+                uri = QgsDataSourceUri()
                 uri.setConnection(host, port, dbname, user, password)
-                uri.setDataSource("public",tableName, "wkb_geometry")
+                uri.setDataSource("public", tableName, "wkb_geometry")
 
                 tableName = uri.uri(False)
             self.debug(f"Test tbe : {tableName}")
@@ -447,9 +406,10 @@ class QSAProject:
         elif t == Qgis.LayerType.Raster:
             self.debug("Init raster layer")
             lyr = QgsRasterLayer(datasource, name, provider)
-            
-            lyr.setContrastEnhancement(QgsContrastEnhancement.ContrastEnhancementAlgorithm.StretchToMinimumMaximum)
-            
+
+            lyr.setContrastEnhancement(
+                QgsContrastEnhancement.ContrastEnhancementAlgorithm.StretchToMinimumMaximum)
+
             ovr = RasterOverview(lyr)
             if overview:
                 if not ovr.is_valid():
@@ -487,7 +447,8 @@ class QSAProject:
 
         # create project
         project = QgsProject()
-        project.read(self._qgis_project_uri, Qgis.ProjectReadFlag.DontResolveLayers)
+        project.read(self._qgis_project_uri,
+                     Qgis.ProjectReadFlag.DontResolveLayers)
         project.addMapLayer(lyr)
 
         self.debug("Write QGIS project")
@@ -499,7 +460,7 @@ class QSAProject:
             geometry = lyr.geometryType().name.lower()
             default_style = self.style_default(geometry)
 
-            self.layer_update_style(name, default_style, True)
+            self.update_style(name, default_style, True)
 
         # add layer in mapproxy config file
         if self._mapproxy_enabled:
@@ -527,31 +488,60 @@ class QSAProject:
 
         return True, ""
 
-    def add_style(
-        self,
-        name: str,
-        layer_type: str,
-        symbology: dict,
-        rendering: dict,
-    ) -> (bool | str):
+    def add_style(self, name: str, layer_type: str, symbology: dict, rendering: dict) -> (bool | str):
         t = self._layer_type(layer_type)
-        match t :
+        match t:
             case Qgis.LayerType.Vector:
                 return self._add_style_vector(name, symbology, rendering)
             case  Qgis.LayerType.Raster:
                 return self._add_style_raster(name, symbology, rendering)
-            case other:
+            case _:
                 return False, "Invalid layer type"
+            
+    def update_style(self, layer_name: str, style_name: str, current: bool) -> (bool | str):
+        self.debug("Start by cleaning MapProxy cache")
+        mp = QSAMapProxy(self.name)
+        mp.clear_cache(layer_name)
+        self.debug("clear_cache is finish")
 
-    def _add_style_raster(
-        self, name: str, symbology: dict, rendering: dict
-    ) -> (bool | str):
+        self.debug("Start by updating style in QGIS project")
+        project = QgsProject()
+        project.read(self._qgis_project_uri)
+        style_path = self._qgis_project_dir / f"{style_name}.qml"
+        layer = project.mapLayersByName(layer_name.strip())[0]
+
+        self.debug(f"project.read : {len(project.mapLayers())}")
+        self.debug(f"Layer name : {layer.name()}")
+        self.debug(f"style_path : {style_path}")
+
+        if style_name not in layer.styleManager().styles():
+            self.debug(f"Add new style {style_name} in style manager")
+            l = layer.clone()
+            l.loadNamedStyle(style_path.as_posix())  # set "default" style
+            layer.styleManager().addStyle(style_name, l.styleManager().style("default"))
+
+        if current:
+            self.debug(f"Set default style {style_name}")
+            layer.styleManager().setCurrentStyle(style_name)
+            # refresh min/max for the current layer if necessary
+            # (because the style is built on an empty geotiff)
+            if layer.type() == QgsMapLayer.RasterLayer:
+                self.debug(f"Refresh symbology renderer min/max: {layer.renderer().type()}")
+                renderer = RasterSymbologyRenderer(layer.renderer().type())
+                self.debug(f"Refresh symbology renderer min/max: {renderer.contrast_algorithm}")
+                self.debug(f"Refresh symbology renderer min/max: {renderer.contrast_limits}")
+                renderer.refresh_min_max(layer)
+
+        self.debug("Write project")
+        project.write()
+
+        return True, ""
+
+    def _add_style_raster(self, name: str, symbology: dict, rendering: dict) -> (bool | str):
         # safety check
-        if "type" not in symbology:
-            return False, "`type` is missing in `symbology`"
-
-        if "properties" not in symbology:
-            return False, "`properties` is missing in `symbology`"
+        match self.__check_data(symbology, rendering):
+            case Err(err):
+                return False, err
 
         # init raster template
         tif = Path(__file__).resolve().parent / "raster" / "empty.tif"
@@ -568,7 +558,8 @@ class QSAProject:
         rl.setRenderer(renderer.renderer)
         if renderer.contrast_algorithm:
             # contrast enhancement needs to be managed after setting renderer
-            rl.setContrastEnhancement(renderer.contrast_algorithm, renderer.contrast_limits)
+            rl.setContrastEnhancement(
+                renderer.contrast_algorithm, renderer.contrast_limits)
             match renderer.manage_min_max_limits(rl).is_err():
                 case True:
                     return False, "Error managing min/max limits"
@@ -576,36 +567,24 @@ class QSAProject:
         # save style as qml
         path = self._qgis_project_dir / f"{name}.qml"
         rl.saveNamedStyle(
-            path.as_posix(), 
-            categories=QgsMapLayer.AllStyleCategories
-        )
+            path.as_posix(), categories=QgsMapLayer.AllStyleCategories)
         return True, ""
-  
-    def _add_style_vector(
-        self, name: str, symbology: dict, rendering: dict
-    ) -> (bool | str):
-        if "type" not in symbology:
-            return False, "`type` is missing in `symbology`"
 
-        if "symbol" not in symbology:
-            return False, "`symbol` is missing in `symbology`"
-
-        if "properties" not in symbology:
-            return False, "`properties` is missing in `symbology`"
-        
+    def _add_style_vector(self, name: str, symbology: dict, rendering: dict) -> (bool | str):
+        match self.__check_data(symbology, rendering):
+            case Err(err):
+                return False, err
 
         render = None
         vl = QgsVectorLayer()
-        
-        match symbology["type"] : 
-            case "single_symbol": 
+        match symbology["type"]:
+            case "single_symbol":
                 render = self._create_single_symbol_style(symbology)
-            case "graduated": 
+            case "graduated":
                 render = self._create_graduated_style(symbology)
-            case "categorized": 
+            case "categorized":
                 render = self._create_categorized_style(symbology)
 
-        
         if "opacity" in rendering:
             vl.setOpacity(float(rendering["opacity"]))
 
@@ -619,163 +598,182 @@ class QSAProject:
             return True, ""
 
         return False, "Error"
-    
-    def _create_categorized_style(self,symbology: dict) -> QgsCategorizedSymbolRenderer:
-        symbol = symbology["symbol"] 
+
+    def __check_data(symbology: dict, rendering: dict) -> Result[bool, QSAProjectErr]:
+        # safety check
+        if "type" not in symbology:
+            return Err(QSAProjectErr.MISSING_TYPE)
+        if "properties" not in symbology:
+            return Err(QSAProjectErr.MISSING_PROPERTIES)
+        return Ok(True)
+
+    def _create_categorized_style(self, symbology: dict) -> QgsCategorizedSymbolRenderer:
+        symbol = symbology["symbol"]
         properties = symbology["properties"]
         attribut = properties["attributs"]
         ranges = []
-        
+
         match symbol:
             case "fill":
                 for categorized_value in properties["list_categorized"]:
                     properties = {
-                        "outline_width" : categorized_value["outline_width"],
-                        "outline_style" : categorized_value["outline_style"],
-                        "outline_color" : categorized_value["outline_color"],
-                        "color"         :categorized_value["color"]
+                        "outline_width": categorized_value["outline_width"],
+                        "outline_style": categorized_value["outline_style"],
+                        "outline_color": categorized_value["outline_color"],
+                        "color": categorized_value["color"]
                     }
                     symbol = QgsFillSymbol.createSimple(properties)
 
                     # time = QDateTime.fromString(categorized_value["value"], "yyyy-MM-dd HH:mm:ss")
-                    range = QgsRendererCategory(categorized_value["value"], symbol, "test")                
+                    range = QgsRendererCategory(
+                        categorized_value["value"], symbol, "test")
                     ranges.append(range)
-                
-            case "line":  
+
+            case "line":
                 for categorized_value in properties["list_categorized"]:
                     properties = {
-                        "line_width" : categorized_value["outline_width"],
-                        "line_style" : categorized_value["outline_style"],
-                        "color"         : categorized_value["outline_color"],
-                        "outline_width_unit" : "MM"
+                        "line_width": categorized_value["outline_width"],
+                        "line_style": categorized_value["outline_style"],
+                        "color": categorized_value["outline_color"],
+                        "outline_width_unit": "MM"
                     }
                     symbol = QgsLineSymbol.createSimple(properties)
 
-                    range = QgsRendererCategory(categorized_value["value"], symbol, "test")
+                    range = QgsRendererCategory(
+                        categorized_value["value"], symbol, "test")
                     ranges.append(range)
-            case "marker":  
+            case "marker":
                 for categorized_value in properties["list_categorized"]:
                     properties = {
                     }
                     symbol = QgsMarkerSymbol.createSimple(properties)
-                    svg_layer = QgsSvgMarkerSymbolLayer(categorized_value["symbol_path"])
-                    testSplit =str(categorized_value["color"]).split(",")
-                    svg_layer.setColor(QColor(int(testSplit[0]),int(testSplit[1]),int(testSplit[2]),int(testSplit[3])))
-                    svg_layer.setStrokeColor(QColor(0,0,0,int(testSplit[3])))
+                    svg_layer = QgsSvgMarkerSymbolLayer(
+                        categorized_value["symbol_path"])
+                    testSplit = str(categorized_value["color"]).split(",")
+                    svg_layer.setColor(QColor(int(testSplit[0]), int(
+                        testSplit[1]), int(testSplit[2]), int(testSplit[3])))
+                    svg_layer.setStrokeColor(
+                        QColor(0, 0, 0, int(testSplit[3])))
                     svg_layer.setSize(categorized_value["size"])
                     symbol.changeSymbolLayer(0, svg_layer)
                     symbol.setSizeUnit(QgsUnitTypes.RenderMillimeters)
-                    
-                    range = QgsRendererCategory(categorized_value["value"], symbol, "test")
+
+                    range = QgsRendererCategory(
+                        categorized_value["value"], symbol, "test")
                     ranges.append(range)
-            case other:  
-                    return None #Not implement
-                
+            case other:
+                return None  # Not implement
+
         render = QgsCategorizedSymbolRenderer(attribut, ranges)
         return render
-    
-    def _create_graduated_style(self,symbology: dict) -> QgsGraduatedSymbolRenderer:
-        
-        symbol = symbology["symbol"] 
+
+    def _create_graduated_style(self, symbology: dict) -> QgsGraduatedSymbolRenderer:
+        symbol = symbology["symbol"]
         properties = symbology["properties"]
         attribut = properties["attributs"]
         ranges = []
-        
+
         match symbol:
             case "fill":
                 for graduated_value in properties["list_graduated"]:
                     properties = {
-                        "outline_width" : graduated_value["outline_width"], 
-                        "outline_style" : graduated_value["outline_style"],
-                        "outline_color" : graduated_value["outline_color"],
-                        "outline_width_unit" : "MM",
+                        "outline_width": graduated_value["outline_width"],
+                        "outline_style": graduated_value["outline_style"],
+                        "outline_color": graduated_value["outline_color"],
+                        "outline_width_unit": "MM",
                         "color": graduated_value["color"]
                     }
                     symbol = QgsFillSymbol.createSimple(properties)
 
-                    range = QgsRendererRange(graduated_value["min"], graduated_value["max"], symbol, "test")
+                    range = QgsRendererRange(
+                        graduated_value["min"], graduated_value["max"], symbol, "test")
                     ranges.append(range)
-                
+
             case "line":
                 for graduated_value in properties["list_graduated"]:
                     properties = {
-                        "line_width" : graduated_value["outline_width"],
-                        "line_style" : graduated_value["outline_style"],
-                        "color"      : graduated_value["outline_color"],
-                        "line_width_unit" : "MM"
+                        "line_width": graduated_value["outline_width"],
+                        "line_style": graduated_value["outline_style"],
+                        "color": graduated_value["outline_color"],
+                        "line_width_unit": "MM"
                     }
                     symbol = QgsLineSymbol.createSimple(properties)
 
-                    range = QgsRendererRange(graduated_value["min"], graduated_value["max"], symbol, "test")
+                    range = QgsRendererRange(
+                        graduated_value["min"], graduated_value["max"], symbol, "test")
                     ranges.append(range)
-            case "marker": 
+            case "marker":
                 for graduated_value in properties["list_graduated"]:
                     properties = {
                     }
                     symbol = QgsMarkerSymbol.createSimple(properties)
-                    svg_layer = QgsSvgMarkerSymbolLayer(graduated_value["symbol_path"])
-                    testSplit =str(graduated_value["color"]).split(",")
-                    svg_layer.setColor(QColor(int(testSplit[0]),int(testSplit[1]),int(testSplit[2]),int(testSplit[3])))
-                    svg_layer.setStrokeColor(QColor(0,0,0,int(testSplit[3])))
+                    svg_layer = QgsSvgMarkerSymbolLayer(
+                        graduated_value["symbol_path"])
+                    testSplit = str(graduated_value["color"]).split(",")
+                    svg_layer.setColor(QColor(int(testSplit[0]), int(
+                        testSplit[1]), int(testSplit[2]), int(testSplit[3])))
+                    svg_layer.setStrokeColor(
+                        QColor(0, 0, 0, int(testSplit[3])))
                     svg_layer.setSize(graduated_value["size"])
                     symbol.setSizeUnit(QgsUnitTypes.RenderMillimeters)
                     symbol.changeSymbolLayer(0, svg_layer)
-                    
-                    range = QgsRendererRange(graduated_value["min"], graduated_value["max"], symbol, "test")
+
+                    range = QgsRendererRange(
+                        graduated_value["min"], graduated_value["max"], symbol, "test")
                     ranges.append(range)
-            case other:  
-                    return None #Not implement
-                
+            case other:
+                return None  # Not implement
+
         render = QgsGraduatedSymbolRenderer(attribut, ranges)
-        render.setMode(QgsGraduatedSymbolRenderer.Custom) 
+        render.setMode(QgsGraduatedSymbolRenderer.Custom)
         return render
 
-    def _create_single_symbol_style(self,symbology: dict) -> QgsSingleSymbolRenderer:
-          
+    def _create_single_symbol_style(self, symbology: dict) -> QgsSingleSymbolRenderer:
+
         symbol = symbology["symbol"]
         properties = symbology["properties"]
-                
+
         match symbol:
             case "fill":
                 properties_fill = {
-                    "outline_width" : properties["outline_width"], 
-                    "outline_style" : properties["outline_style"],
-                    "outline_color" : properties["outline_color"],
-                    "color" : properties["color"],
-                    "outline_width_unit" : "MM"
+                    "outline_width": properties["outline_width"],
+                    "outline_style": properties["outline_style"],
+                    "outline_color": properties["outline_color"],
+                    "color": properties["color"],
+                    "outline_width_unit": "MM"
                 }
                 symbol = QgsFillSymbol.createSimple(properties_fill)
             case "line":
                 properties_line = {
-                    "line_width" : properties["outline_width"],
-                    "line_style" : properties["outline_style"],
-                    "color" : properties["outline_color"],
-                    "capstyle":"round",
-                    "line_width_unit":"MM",
-                    "joinstyle":"round"
+                    "line_width": properties["outline_width"],
+                    "line_style": properties["outline_style"],
+                    "color": properties["outline_color"],
+                    "capstyle": "round",
+                    "line_width_unit": "MM",
+                    "joinstyle": "round"
                 }
                 symbol = QgsLineSymbol.createSimple(properties_line)
 
-            case "marker": 
-                    
-                    properties_marker = {
-                    }
-                    
-                    testSplit =str(properties["color"]).split(",")
-                    symbol = QgsMarkerSymbol.createSimple(properties_marker)
-                    svg_layer = QgsSvgMarkerSymbolLayer(properties["symbol_path"])
-                    
-                    svg_layer.setColor(QColor(int(testSplit[0]),int(testSplit[1]),int(testSplit[2]),int(testSplit[3])))
-                    svg_layer.setStrokeColor(QColor(0,0,0,int(testSplit[3])))
-                    svg_layer.setSize(properties["size"])
-                    symbol.setSizeUnit(QgsUnitTypes.RenderMillimeters)
-                    symbol.changeSymbolLayer(0, svg_layer)
-            case other:  
-                    return None #Not implement
-                
+            case "marker":
+
+                properties_marker = {
+                }
+
+                testSplit = str(properties["color"]).split(",")
+                symbol = QgsMarkerSymbol.createSimple(properties_marker)
+                svg_layer = QgsSvgMarkerSymbolLayer(properties["symbol_path"])
+
+                svg_layer.setColor(QColor(int(testSplit[0]), int(
+                    testSplit[1]), int(testSplit[2]), int(testSplit[3])))
+                svg_layer.setStrokeColor(QColor(0, 0, 0, int(testSplit[3])))
+                svg_layer.setSize(properties["size"])
+                symbol.setSizeUnit(QgsUnitTypes.RenderMillimeters)
+                symbol.changeSymbolLayer(0, svg_layer)
+            case other:
+                return None  # Not implement
+
         render = QgsSingleSymbolRenderer(symbol)
         return render
-
 
     def remove_style(self, name: str) -> bool:
         if name not in self.styles:

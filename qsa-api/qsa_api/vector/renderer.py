@@ -23,7 +23,7 @@ class VectorSymbologyRenderer:
         return False
 
     @staticmethod
-    def style_to_json(path: Path) -> (dict, str):
+    def style_to_json(path: Path) -> (dict | str):
         doc = QDomDocument()
         doc.setContent(open(path.as_posix()).read())
         node = QDomNode(doc.firstChild())
