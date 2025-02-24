@@ -1,6 +1,6 @@
 from qgis.core import QgsRasterMinMaxOrigin, QgsSingleBandGrayRenderer, QgsRasterShader, QgsColorRampShader, QgsStyle, QgsGradientColorRamp
-from raster import RasterSymbologyRenderer
-from raster.renderer import ContrastEnhancementAlgorithm
+from .renderer import RasterSymbologyRenderer
+from .renderer import ContrastEnhancementAlgorithm
 
 class PropertiesBuilder:
 
