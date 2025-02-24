@@ -560,9 +560,7 @@ class QSAProject:
             # contrast enhancement needs to be managed after setting renderer
             rl.setContrastEnhancement(
                 renderer.contrast_algorithm, renderer.contrast_limits)
-            match renderer.manage_min_max_limits(rl).is_err():
-                case True:
-                    return False, "Error managing min/max limits"
+            renderer.manage_min_max_limits(rl)
 
         # save style as qml
         path = self._qgis_project_dir / f"{name}.qml"

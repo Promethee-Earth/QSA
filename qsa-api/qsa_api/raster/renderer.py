@@ -1,9 +1,11 @@
 # coding: utf8
 
+import sys
 from enum import Enum
 from pathlib import Path
 from wrappers import Result, Err
 from properties_builder import PropertiesBuilder
+from utils import StorageBackend, logger
 
 from qgis.core import (
     QgsRasterLayer,
@@ -25,6 +27,8 @@ class RasterSymbologyRendererErr(Enum):
 
 
 class RasterSymbologyRenderer:
+    """Layer style generator"""
+    
     class Color(Enum):
         GRAY = 0
         RED = 1
@@ -51,15 +55,14 @@ class RasterSymbologyRenderer:
         self.green_max = None
         self.blue_min = None
         self.blue_max = None
-
-        if name == RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY.value:
-            self.renderer = QgsSingleBandGrayRenderer(None, 1)
-        elif name == RasterSymbologyRenderer.Type.MULTI_BAND_COLOR.value:
-            self.renderer = QgsMultiBandColorRenderer(None, 1, 1, 1)
-        elif (
-            name == RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR.value
-        ):
-            self.renderer = QgsSingleBandPseudoColorRenderer(None, 1)
+        
+        match name:
+            case RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY.value:
+                self.renderer = QgsSingleBandGrayRenderer(None, 1)
+            case RasterSymbologyRenderer.Type.MULTI_BAND_COLOR.value:
+                self.renderer = QgsMultiBandColorRenderer(None, 1, 1, 1)
+            case RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR.value:
+                self.renderer = QgsSingleBandPseudoColorRenderer(None, 1)
 
     @property
     def type(self):
@@ -74,6 +77,7 @@ class RasterSymbologyRenderer:
                 return None
 
     def load(self, properties: dict) -> (bool | str):
+        """Load renderer base type raster"""
         if not self.renderer:
             return False, "Invalid renderer"
         if "contrast_enhancement" in properties:
@@ -93,6 +97,7 @@ class RasterSymbologyRenderer:
         return True, ""
 
     def refresh_min_max(self, layer: QgsRasterLayer) -> None:
+        """Apply style to the specified layer"""
         # see QgsRasterMinMaxWidget::doComputations
         # early break
         if (layer.renderer().minMaxOrigin().limits() == QgsRasterMinMaxOrigin.Limits.None_):
@@ -100,13 +105,17 @@ class RasterSymbologyRenderer:
         # refresh according to renderer
         match self.type:
             case RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY:
+                self.__debug("refresh min max single band gray")
                 self._refresh_min_max_singlebandgray(layer)
             case RasterSymbologyRenderer.Type.MULTI_BAND_COLOR:
+                self.__debug("refresh min max multiband color")
                 self._refresh_min_max_multibandcolor(layer)
             case RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR:
+                self.__debug("refresh min max single band pseudocolor")
                 self._refresh_min_max_singlebandpseudocolor(layer)
 
     def process_renderering(self, raster: QgsRasterLayer, rendering: dict) -> None:
+        """Apply rendering to an abstract layer style"""
         # config rendering
         mapping = {
             "gamma": lambda v: raster.brightnessFilter().setGamma(float(v)),
@@ -118,7 +127,8 @@ class RasterSymbologyRenderer:
             if key in rendering:
                 action(rendering[key])
 
-    def manage_min_max_limits(self, raster: QgsRasterLayer) -> Result[None, RasterSymbologyRendererErr]:
+    def manage_min_max_limits(self, raster: QgsRasterLayer) -> None:
+        """Generate an abstract layer style"""
         match  self.contrast_limits:
             # user defined min/max
             case QgsRasterMinMaxOrigin.Limits.None_:
@@ -194,8 +204,10 @@ class RasterSymbologyRenderer:
             case QgsRasterMinMaxOrigin.Limits.None_:
                 return
             case QgsRasterMinMaxOrigin.Limits.MinMax:
+                self.__debug("compute multi band min max")
                 self.__compute_multi_band_min_max(layer, renderer)
             case QgsRasterMinMaxOrigin.Limits.CumulativeCut:
+                self.__debug("compute cumulative cut")
                 self.__compute_multi_band_min_max(layer, renderer)
                 min_max_cut = QgsRasterMinMaxOrigin()
                 min_max_cut.setLimits(QgsRasterMinMaxOrigin.Limits.CumulativeCut)
@@ -316,3 +328,16 @@ class RasterSymbologyRenderer:
                     self.contrast_limits = QgsRasterMinMaxOrigin.Limits.CumulativeCut
                 case "MinMax":
                     self.contrast_limits = QgsRasterMinMaxOrigin.Limits.MinMax
+                    
+        # to remove after testing
+        self.contrast_algorithm = ContrastEnhancementAlgorithm.UserDefinedEnhancement
+        self.contrast_limits = QgsRasterMinMaxOrigin.Limits.CumulativeCut
+
+
+    def __debug(self, msg: str) -> None:
+        caller = f"{self.__class__.__name__}.{sys._getframe().f_back.f_code.co_name}"
+        if StorageBackend.type() == StorageBackend.FILESYSTEM:
+            msg = f"[{caller}][{self.name}] {msg}"
+        else:
+            msg = f"[{caller}][{self.schema}:{self.name}] {msg}"
+        logger().debug(msg)

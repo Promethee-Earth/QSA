@@ -1,4 +1,4 @@
-from raster import RasterSymbologyRenderer
+from .renderer import RasterSymbologyRenderer
 from qgis.core import QgsRasterLayer, QgsContrastEnhancement, QgsRasterMinMaxOrigin, QgsSingleBandGrayRenderer, QgsColorRampShader
 from pathlib import Path
 
