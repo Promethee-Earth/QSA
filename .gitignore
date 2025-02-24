@@ -12,3 +12,4 @@ docs/build
 sandbox/projects
 *.aux.xml
 sandbox/*.png
+.idea
