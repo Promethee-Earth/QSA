@@ -3,7 +3,7 @@
 import sys
 from enum import Enum
 from pathlib import Path
-from properties_builder import PropertiesBuilder
+from .properties_builder import PropertiesBuilder
 from utils import StorageBackend, logger
 
 from qgis.core import (
