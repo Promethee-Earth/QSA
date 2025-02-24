@@ -3,7 +3,7 @@
 import sys
 from enum import Enum
 from pathlib import Path
-from utils import StorageBackend, logger
+from ..utils import StorageBackend, logger
 
 from qgis.core import (
     QgsRasterLayer,
