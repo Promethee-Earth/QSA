@@ -3,7 +3,6 @@
 import sys
 from enum import Enum
 from pathlib import Path
-from wrappers import Result, Err
 from properties_builder import PropertiesBuilder
 from utils import StorageBackend, logger
 
