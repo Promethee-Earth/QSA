@@ -317,9 +317,11 @@ class RasterSymbologyRenderer:
             QgsRasterBandStats.Min | QgsRasterBandStats.Max,
             layer.extent(),
             250000,
-        ) 
-        red_ce.setMinimumValue(red_stats.minimumValue)
-        red_ce.setMaximumValue(red_stats.maximumValue)
+        )
+        red_min_max = layer.dataProvider().cumulativeCut(red_band, 0.20, 0.60)
+        self.debug(f"red_min_max: {red_min_max[0]}, {red_min_max[1]}")
+        red_ce.setMinimumValue(red_min_max[0])
+        red_ce.setMaximumValue(red_min_max[1])
         
         green_band = renderer.greenBand()
         green_stats = layer.dataProvider().bandStatistics(
@@ -328,8 +330,10 @@ class RasterSymbologyRenderer:
             layer.extent(),
             250000,
         )
-        green_ce.setMinimumValue(green_stats.minimumValue)
-        green_ce.setMaximumValue(green_stats.maximumValue)
+        green_min_max = layer.dataProvider().cumulativeCut(green_band, 0.20, 0.60)
+        self.debug(f"green_min_max: {green_min_max[0]}, {green_min_max[1]}")
+        green_ce.setMinimumValue(green_min_max[0])
+        green_ce.setMaximumValue(green_min_max[1])
 
         blue_band = renderer.blueBand()
         blue_stats = layer.dataProvider().bandStatistics(
@@ -338,15 +342,16 @@ class RasterSymbologyRenderer:
             layer.extent(),
             250000,
         )
-        blue_ce.setMinimumValue(blue_stats.minimumValue)
-        blue_ce.setMaximumValue(blue_stats.maximumValue)
-
+        blue_min_max = layer.dataProvider().cumulativeCut(blue_band, 0.20, 0.60)
+        self.debug(f"blue_min_max: {blue_min_max[0]}, {blue_min_max[1]}")
+        blue_ce.setMinimumValue(blue_min_max[0])
+        blue_ce.setMaximumValue(blue_min_max[1])
+        
         layer.renderer().setRedContrastEnhancement(red_ce)
         layer.renderer().setGreenContrastEnhancement(green_ce)
         layer.renderer().setBlueContrastEnhancement(blue_ce)
         
         self.debug(f"do cumulative cut")
-        layer.dataProvider().cumulativeCut(red_band, 0.20, 0.60)
         layer.dataProvider().cumulativeCut(green_band, 0.20, 0.60)
         layer.dataProvider().cumulativeCut(blue_band, 0.20, 0.60)
         
