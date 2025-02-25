@@ -1,5 +1,6 @@
 # coding: utf8
 
+import sys
 from enum import Enum
 from pathlib import Path
 from ..utils import logger
@@ -94,11 +95,11 @@ class RasterSymbologyRenderer:
         # see QgsRasterMinMaxWidget::doComputations
 
         # early break
-        if (
-            layer.renderer().minMaxOrigin().limits()
-            == QgsRasterMinMaxOrigin.Limits.None_
-        ):
-            return
+        # if (
+        #     layer.renderer().minMaxOrigin().limits()
+        #     == QgsRasterMinMaxOrigin.Limits.None_
+        # ):
+        #     return
 
         # refresh according to renderer
         if self.type == RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY:
@@ -356,13 +357,13 @@ class RasterSymbologyRenderer:
         )
         ce.setMinimumValue(stats.minimumValue)
         ce.setMaximumValue(stats.maximumValue)
-        logger().debug(f"min: {ce.minimumValue()}, max: {ce.maximumValue()}")
+        self.debug(f"min: {ce.minimumValue()}, max: {ce.maximumValue()}")
         min_max_cut = QgsRasterMinMaxOrigin()
         min_max_cut.setLimits(QgsRasterMinMaxOrigin.Limits.CumulativeCut)
         min_max_cut.setCumulativeCutUpper(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_UPPER)
         min_max_cut.setCumulativeCutLower(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_LOWER)
         layer.renderer().setMinMaxOrigin(min_max_cut)
-        logger().debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
+        self.debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
         return
         # early break
         alg = ce.contrastEnhancementAlgorithm()
@@ -554,3 +555,8 @@ class RasterSymbologyRenderer:
                 self.contrast_limits = QgsRasterMinMaxOrigin.Limits.None_
             elif limits == "MinMax":
                 self.contrast_limits = QgsRasterMinMaxOrigin.Limits.MinMax
+
+    def debug(self, msg: str) -> None:
+        caller = f"{self.__class__.__name__}.{sys._getframe().f_back.f_code.co_name}"
+        msg = f"[{caller}][{self.type}:{self.type}] {msg}"
+        logger().debug(msg)
