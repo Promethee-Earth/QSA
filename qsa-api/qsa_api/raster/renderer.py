@@ -351,6 +351,7 @@ class RasterSymbologyRenderer:
         self.debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
         
         widget = QgsRasterMinMaxWidget(layer)
+        widget.setFromMinMaxOrigin(min_max_cut)
         widget.doComputations()
         
         return
