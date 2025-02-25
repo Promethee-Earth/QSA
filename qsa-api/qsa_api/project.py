@@ -518,8 +518,8 @@ class QSAProject:
             self.debug(f"Add new style {style_name} in style manager")
             l = layer.clone()
             l.loadNamedStyle(style_path.as_posix())  # set "default" style
-            self.debug(f"clone algo: {l.renderer().contrastEnhancementAlgorithm()}")
-            self.debug(f"clone limits: {l.renderer().contrastEnhancementLimits()}")
+            self.debug(f"clone algo: {l.renderer().contrastEnhancement().contrastEnhancementAlgorithm()}")
+            self.debug(f"clone limits: {l.renderer().minMaxOrigin().limits()}")
             layer.styleManager().addStyle(style_name, l.styleManager().style("default"))
 
         if current:
