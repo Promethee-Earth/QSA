@@ -106,8 +106,10 @@ class RasterSymbologyRenderer:
             self.debug("Refresh min/max for singlebandgray")
             self._refresh_min_max_singlebandgray(layer)
         elif self.type == RasterSymbologyRenderer.Type.MULTI_BAND_COLOR:
+            self.debug("Refresh min/max for multibandcolor")
             self._refresh_min_max_multibandcolor(layer)
         elif self.type == RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR:
+            self.debug("Refresh min/max for singlebandpseudocolor")
             self._refresh_min_max_singlebandpseudocolor(layer)
 
     @staticmethod
