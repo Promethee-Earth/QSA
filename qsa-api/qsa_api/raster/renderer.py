@@ -256,7 +256,7 @@ class RasterSymbologyRenderer:
         
 
     def _refresh_min_max_singlebandgray(self, layer: QgsRasterLayer) -> None:
-        renderer = QgsSingleBandGrayRenderer(layer.renderer())
+        renderer = QgsSingleBandGrayRenderer(layer.renderer(), 1)
         ce = renderer.contrastEnhancement()
 
         # early break
