@@ -260,8 +260,10 @@ class RasterSymbologyRenderer:
         ce = renderer.contrastEnhancement()
 
         # early break
-        alg = ce.contrastEnhancementAlgorithm()
-        limits = renderer.minMaxOrigin().limits()
+        # alg = ce.contrastEnhancementAlgorithm()
+        # limits = renderer.minMaxOrigin().limits()
+        alg = ContrastEnhancementAlgorithm.UserDefinedEnhancement
+        limits = QgsRasterMinMaxOrigin.Limits.CumulativeCut
         if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
             return
         
