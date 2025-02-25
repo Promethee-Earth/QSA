@@ -534,8 +534,8 @@ class QSAProject:
                 self.debug(f"Refresh symbology renderer min/max: {renderer.contrast_limits}")
                 renderer.refresh_min_max(layer)
 
-        self.debug("Write project")
         project.write()
+        self.debug("Write project")
 
         return True, ""
 
