@@ -541,6 +541,7 @@ class QSAProject:
         # safety check
         match self.__check_data(symbology, rendering):
             case Err(err):
+                self.debug(f"Error : {err.value}")
                 return False, err.value
 
         # init raster template

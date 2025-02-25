@@ -339,9 +339,9 @@ class RasterSymbologyRenderer:
     def __debug(self, msg: str) -> None:
         caller = f"{self.__class__.__name__}.{sys._getframe().f_back.f_code.co_name}"
         if StorageBackend.type() == StorageBackend.FILESYSTEM:
-            msg = f"[{caller}][{self.name}] {msg}"
+            msg = f"[{caller}][{self.type}] {msg}"
         else:
-            msg = f"[{caller}][{self.schema}:{self.name}] {msg}"
+            msg = f"[{caller}][{self.type}:{self.type}] {msg}"
         logger().debug(msg)
         
 
