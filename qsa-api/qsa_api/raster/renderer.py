@@ -2,6 +2,7 @@
 
 from enum import Enum
 from pathlib import Path
+from ..utils import logger
 
 from qgis.core import (
     QgsStyle,
@@ -355,11 +356,13 @@ class RasterSymbologyRenderer:
         )
         ce.setMinimumValue(stats.minimumValue)
         ce.setMaximumValue(stats.maximumValue)
+        logger().debug(f"min: {ce.minimumValue()}, max: {ce.maximumValue()}")
         min_max_cut = QgsRasterMinMaxOrigin()
         min_max_cut.setLimits(QgsRasterMinMaxOrigin.Limits.CumulativeCut)
         min_max_cut.setCumulativeCutUpper(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_UPPER)
         min_max_cut.setCumulativeCutLower(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_LOWER)
         layer.renderer().setMinMaxOrigin(min_max_cut)
+        logger().debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
         return
         # early break
         alg = ce.contrastEnhancementAlgorithm()
