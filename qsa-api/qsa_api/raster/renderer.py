@@ -304,6 +304,52 @@ class RasterSymbologyRenderer:
         red_ce = QgsContrastEnhancement(renderer.redContrastEnhancement())
         green_ce = QgsContrastEnhancement(renderer.greenContrastEnhancement())
         blue_ce = QgsContrastEnhancement(renderer.blueContrastEnhancement())
+        
+        red_band = renderer.redBand()
+        red_stats = layer.dataProvider().bandStatistics(
+            red_band,
+            QgsRasterBandStats.Min | QgsRasterBandStats.Max,
+            layer.extent(),
+            250000,
+        )
+        red_ce.setMinimumValue(red_stats.minimumValue)
+        red_ce.setMaximumValue(red_stats.maximumValue)
+
+        green_band = renderer.greenBand()
+        green_stats = layer.dataProvider().bandStatistics(
+            green_band,
+            QgsRasterBandStats.Min | QgsRasterBandStats.Max,
+            layer.extent(),
+            250000,
+        )
+        green_ce.setMinimumValue(green_stats.minimumValue)
+        green_ce.setMaximumValue(green_stats.maximumValue)
+
+        blue_band = renderer.blueBand()
+        blue_stats = layer.dataProvider().bandStatistics(
+            blue_band,
+            QgsRasterBandStats.Min | QgsRasterBandStats.Max,
+            layer.extent(),
+            250000,
+        )
+        blue_ce.setMinimumValue(blue_stats.minimumValue)
+        blue_ce.setMaximumValue(blue_stats.maximumValue)
+
+        layer.renderer().setRedContrastEnhancement(red_ce)
+        layer.renderer().setGreenContrastEnhancement(green_ce)
+        layer.renderer().setBlueContrastEnhancement(blue_ce)
+        
+        self.debug(f"min: {red_ce.minimumValue()}, max: {red_ce.maximumValue()}")
+        self.debug(f"min: {green_ce.minimumValue()}, max: {green_ce.maximumValue()}")
+        self.debug(f"min: {blue_ce.minimumValue()}, max: {blue_ce.maximumValue()}")
+        min_max_cut = QgsRasterMinMaxOrigin()
+        min_max_cut.setLimits(QgsRasterMinMaxOrigin.Limits.CumulativeCut)
+        min_max_cut.setCumulativeCutUpper(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_UPPER)
+        min_max_cut.setCumulativeCutLower(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_LOWER)
+        layer.renderer().setMinMaxOrigin(min_max_cut)
+        self.debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
+        
+        return
 
         # early break
         alg = red_ce.contrastEnhancementAlgorithm()
