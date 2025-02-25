@@ -597,12 +597,12 @@ class QSAProject:
 
         return False, "Error"
 
-    def __check_data(symbology: dict, rendering: dict) -> Result[bool, QSAProjectErr]:
+    def __check_data(self, symbology: dict, rendering: dict) -> Result[bool, QSAProjectErr]:
         # safety check
+        if "properties" not in rendering:
+            return Err(QSAProjectErr.MISSING_PROPERTIES)
         if "type" not in symbology:
             return Err(QSAProjectErr.MISSING_TYPE)
-        if "properties" not in symbology:
-            return Err(QSAProjectErr.MISSING_PROPERTIES)
         return Ok(True)
 
     def _create_categorized_style(self, symbology: dict) -> QgsCategorizedSymbolRenderer:
