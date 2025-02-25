@@ -280,6 +280,14 @@ class RasterSymbologyRenderer:
                 ce.setMinimumValue(stats.minimumValue)
                 ce.setMaximumValue(stats.maximumValue)
                 layer.renderer().setContrastEnhancement(ce)
+                self.__debug(f"min: {stats.minimumValue}, max: {stats.maximumValue}")
+                layer.renderer().setContrastEnhancement(ce)
+                min_max_cut = QgsRasterMinMaxOrigin()
+                min_max_cut.setLimits(QgsRasterMinMaxOrigin.Limits.CumulativeCut)
+                min_max_cut.setCumulativeCutUpper(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_UPPER)
+                min_max_cut.setCumulativeCutLower(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_LOWER)
+                layer.renderer().setMinMaxOrigin(min_max_cut)
+                self.__debug(f"compute cumulative cut min max")
                 
             case QgsRasterMinMaxOrigin.Limits.CumulativeCut:
                 self.__debug("compute cumulative cut")
