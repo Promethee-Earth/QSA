@@ -350,6 +350,7 @@ class RasterSymbologyRenderer:
 
         # early break
         alg = ce.contrastEnhancementAlgorithm()
+        alg = ContrastEnhancementAlgorithm.UserDefinedEnhancement
         if (
             alg == ContrastEnhancementAlgorithm.NoEnhancement
             # or alg == ContrastEnhancementAlgorithm.UserDefinedEnhancement
@@ -370,6 +371,11 @@ class RasterSymbologyRenderer:
 
             ce.setMinimumValue(stats.minimumValue)
             ce.setMaximumValue(stats.maximumValue)
+            min_max_cut = QgsRasterMinMaxOrigin()
+            min_max_cut.setLimits(QgsRasterMinMaxOrigin.Limits.CumulativeCut)
+            min_max_cut.setCumulativeCutUpper(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_UPPER)
+            min_max_cut.setCumulativeCutLower(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_LOWER)
+            layer.renderer().setMinMaxOrigin(min_max_cut)
         if min_max_origin == QgsRasterMinMaxOrigin.Limits.CumulativeCut:
             # Accuracy : estimate
             stats = layer.dataProvider().bandStatistics(
