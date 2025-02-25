@@ -347,7 +347,20 @@ class RasterSymbologyRenderer:
 
     def _refresh_min_max_singlebandgray(self, layer: QgsRasterLayer) -> None:
         ce = QgsContrastEnhancement(layer.renderer().contrastEnhancement())
-
+        stats = layer.dataProvider().bandStatistics(
+            1,
+            QgsRasterBandStats.Min | QgsRasterBandStats.Max,
+            layer.extent(),
+            250000,
+        )
+        ce.setMinimumValue(stats.minimumValue)
+        ce.setMaximumValue(stats.maximumValue)
+        min_max_cut = QgsRasterMinMaxOrigin()
+        min_max_cut.setLimits(QgsRasterMinMaxOrigin.Limits.CumulativeCut)
+        min_max_cut.setCumulativeCutUpper(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_UPPER)
+        min_max_cut.setCumulativeCutLower(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_LOWER)
+        layer.renderer().setMinMaxOrigin(min_max_cut)
+        return
         # early break
         alg = ce.contrastEnhancementAlgorithm()
         alg = ContrastEnhancementAlgorithm.UserDefinedEnhancement
