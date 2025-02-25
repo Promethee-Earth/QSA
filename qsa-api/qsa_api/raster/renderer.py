@@ -18,6 +18,7 @@ from qgis.core import (
     QgsMultiBandColorRenderer,
     QgsSingleBandPseudoColorRenderer,
 )
+from qgis.gui import QgsRasterMinMaxWidget
 
 ContrastEnhancementAlgorithm = (
     QgsContrastEnhancement.ContrastEnhancementAlgorithm
@@ -305,7 +306,6 @@ class RasterSymbologyRenderer:
         red_ce = QgsContrastEnhancement(renderer.redContrastEnhancement())
         green_ce = QgsContrastEnhancement(renderer.greenContrastEnhancement())
         blue_ce = QgsContrastEnhancement(renderer.blueContrastEnhancement())
-        
         red_band = renderer.redBand()
         red_stats = layer.dataProvider().bandStatistics(
             red_band,
@@ -315,7 +315,7 @@ class RasterSymbologyRenderer:
         )
         red_ce.setMinimumValue(red_stats.minimumValue)
         red_ce.setMaximumValue(red_stats.maximumValue)
-
+        
         green_band = renderer.greenBand()
         green_stats = layer.dataProvider().bandStatistics(
             green_band,
@@ -349,6 +349,9 @@ class RasterSymbologyRenderer:
         min_max_cut.setCumulativeCutLower(0.20)
         layer.renderer().setMinMaxOrigin(min_max_cut)
         self.debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
+        
+        widget = QgsRasterMinMaxWidget(layer)
+        widget.doComputations()
         
         return
 
