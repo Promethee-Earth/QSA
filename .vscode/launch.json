@@ -15,7 +15,7 @@
                     "remoteRoot": "/qsa"
                 }
             ],
-            "preLaunchTask": "Docker Compose Build"
+            // "preLaunchTask": "Docker Compose Build"
         },
     ]
 }

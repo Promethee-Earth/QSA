@@ -38,7 +38,7 @@ from .vector import VectorSymbologyRenderer
 from .utils import StorageBackend, config, logger
 from .raster import RasterSymbologyRenderer, RasterOverview
 from .raster import RasterSerializer
-from wrappers import Result, Ok, Err
+from .wrappers import Result, Ok, Err
 
 
 RENDERER_TAG_NAME = "renderer-v2"  # constant from core/symbology/renderer.h
