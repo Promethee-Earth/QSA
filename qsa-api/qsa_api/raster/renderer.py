@@ -102,6 +102,9 @@ class RasterSymbologyRenderer:
         #     return
 
         # refresh according to renderer
+        self.debug("Refresh min/max for singlebandgray")
+        self._refresh_min_max_singlebandgray(layer)
+        return
         if self.type == RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY:
             self.debug("Refresh min/max for singlebandgray")
             self._refresh_min_max_singlebandgray(layer)
