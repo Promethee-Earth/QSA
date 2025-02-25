@@ -102,9 +102,7 @@ class RasterSymbologyRenderer:
         #     return
 
         # refresh according to renderer
-        self.debug("Refresh min/max for singlebandgray")
-        self._refresh_min_max_singlebandgray(layer)
-        return
+
         if self.type == RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY:
             self.debug("Refresh min/max for singlebandgray")
             self._refresh_min_max_singlebandgray(layer)
@@ -347,8 +345,8 @@ class RasterSymbologyRenderer:
         self.debug(f"min: {blue_ce.minimumValue()}, max: {blue_ce.maximumValue()}")
         min_max_cut = QgsRasterMinMaxOrigin()
         min_max_cut.setLimits(QgsRasterMinMaxOrigin.Limits.CumulativeCut)
-        min_max_cut.setCumulativeCutUpper(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_UPPER)
-        min_max_cut.setCumulativeCutLower(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_LOWER)
+        min_max_cut.setCumulativeCutUpper(0.60)
+        min_max_cut.setCumulativeCutLower(0.20)
         layer.renderer().setMinMaxOrigin(min_max_cut)
         self.debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
         
