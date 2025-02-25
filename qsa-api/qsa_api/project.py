@@ -292,6 +292,7 @@ class QSAProject:
                 self.debug("Refresh symbology renderer min/max")
                 renderer = RasterSymbologyRenderer(layer.renderer().type())
                 renderer.refresh_min_max(layer)
+                self.debug(f"Refresh symbology renderer min/max done: {layer.renderer().minMaxOrigin().limits()}")
 
         self.debug("Write project")
         project.write()
