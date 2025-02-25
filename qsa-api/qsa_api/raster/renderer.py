@@ -352,12 +352,13 @@ class RasterSymbologyRenderer:
         alg = ce.contrastEnhancementAlgorithm()
         if (
             alg == ContrastEnhancementAlgorithm.NoEnhancement
-            or alg == ContrastEnhancementAlgorithm.UserDefinedEnhancement
+            # or alg == ContrastEnhancementAlgorithm.UserDefinedEnhancement
         ):
             return
 
         # compute min/max
         min_max_origin = layer.renderer().minMaxOrigin().limits()
+        min_max_origin = QgsRasterMinMaxOrigin.Limits.CumulativeCut
         if min_max_origin == QgsRasterMinMaxOrigin.Limits.MinMax:
             # Accuracy : estimate
             stats = layer.dataProvider().bandStatistics(
@@ -369,6 +370,22 @@ class RasterSymbologyRenderer:
 
             ce.setMinimumValue(stats.minimumValue)
             ce.setMaximumValue(stats.maximumValue)
+        if min_max_origin == QgsRasterMinMaxOrigin.Limits.CumulativeCut:
+            # Accuracy : estimate
+            stats = layer.dataProvider().bandStatistics(
+                1,
+                QgsRasterBandStats.Min | QgsRasterBandStats.Max,
+                layer.extent(),
+                250000,
+            )
+
+            ce.setMinimumValue(stats.minimumValue)
+            ce.setMaximumValue(stats.maximumValue)
+            min_max_cut = QgsRasterMinMaxOrigin()
+            min_max_cut.setLimits(QgsRasterMinMaxOrigin.Limits.CumulativeCut)
+            min_max_cut.setCumulativeCutUpper(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_UPPER)
+            min_max_cut.setCumulativeCutLower(QgsRasterMinMaxOrigin.CUMULATIVE_CUT_LOWER)
+            layer.renderer().setMinMaxOrigin(min_max_cut)
 
         layer.renderer().setContrastEnhancement(ce)
 
