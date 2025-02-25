@@ -541,7 +541,7 @@ class QSAProject:
         # safety check
         match self.__check_data(symbology, rendering):
             case Err(err):
-                return False, err
+                return False, err.value
 
         # init raster template
         tif = Path(__file__).resolve().parent / "raster" / "empty.tif"
@@ -571,7 +571,7 @@ class QSAProject:
     def _add_style_vector(self, name: str, symbology: dict, rendering: dict) -> (bool | str):
         match self.__check_data(symbology, rendering):
             case Err(err):
-                return False, err
+                return False, err.value
 
         render = None
         vl = QgsVectorLayer()

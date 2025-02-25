@@ -13,3 +13,4 @@ sandbox/projects
 *.aux.xml
 sandbox/*.png
 .idea
+mapproxy-data
