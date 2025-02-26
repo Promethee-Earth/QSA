@@ -21,8 +21,7 @@ from qgis.core import (
 from ..utils import logger
 
 ContrastEnhancementAlgorithm = (
-    QgsContrastEnhancement.ContrastEnhancementAlgorithm
-)
+    QgsContrastEnhancement.ContrastEnhancementAlgorithm)
 
 
 class RasterSymbologyRenderer:
@@ -77,6 +76,7 @@ class RasterSymbologyRenderer:
                 return None
 
     def load(self, properties: dict) -> (bool | str):
+        """init renderer with request properties"""
         if not self.renderer:
             return False, "Invalid renderer"
         if "contrast_enhancement" in properties:
@@ -91,7 +91,7 @@ class RasterSymbologyRenderer:
         return True, ""
 
     def process_renderering(self, raster: QgsRasterLayer, rendering: dict) -> None:
-        """Apply rendering to an abstract layer style"""
+        """Apply rendering to the template raster"""
         # config rendering
         mapping = {
             "gamma": lambda v: raster.brightnessFilter().setGamma(float(v)),
@@ -103,31 +103,33 @@ class RasterSymbologyRenderer:
             if key in rendering:
                 action(rendering[key])
 
-    def set_user_defined_limits(self, layer: QgsRasterLayer) -> None:
+    def set_user_defined_limits(self, raster: QgsRasterLayer) -> None:
+        """Set user defined limits to the template raster"""
         match self.type:
             case RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY:
                 ce = QgsContrastEnhancement(
-                    layer.renderer().contrastEnhancement())
-                self._set_min_max(layer, ce, self.Color.GRAY)
+                    raster.renderer().contrastEnhancement())
+                self._set_min_max(raster, ce, self.Color.GRAY)
 
             case RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR:
                 return
             case RasterSymbologyRenderer.Type.MULTI_BAND_COLOR:
                 red_ce = QgsContrastEnhancement(
-                    layer.renderer().redContrastEnhancement())
-                self._set_min_max(layer, red_ce, self.Color.RED)
+                    raster.renderer().redContrastEnhancement())
+                self._set_min_max(raster, red_ce, self.Color.RED)
 
                 green_ce = QgsContrastEnhancement(
-                    layer.renderer().greenContrastEnhancement())
+                    raster.renderer().greenContrastEnhancement())
                 self._set_min_max(
-                    layer, green_ce, self.Color.GREEN)
+                    raster, green_ce, self.Color.GREEN)
 
                 blue_ce = QgsContrastEnhancement(
-                    layer.renderer().blueContrastEnhancement())
+                    raster.renderer().blueContrastEnhancement())
                 self._set_min_max(
-                    layer, blue_ce, self.Color.BLUE)
+                    raster, blue_ce, self.Color.BLUE)
 
     def set_cumulative_cut_limits(self, layer: QgsRasterLayer) -> None:
+        """Set cumulative cut limits to the template raster"""
         min_max_cut = QgsRasterMinMaxOrigin()
         min_max_cut.setLimits(QgsRasterMinMaxOrigin.Limits.CumulativeCut)
         min_max_cut.setCumulativeCutUpper(self.cumulative_cut_upper)
@@ -156,7 +158,7 @@ class RasterSymbologyRenderer:
             self.__debug("Refresh min/max for singlebandpseudocolor")
             self._refresh_min_max_singlebandpseudocolor(layer)
 
-# private methods ######################################################################################################
+    # private methods ######################################################################################################
     def _set_min_max(self, layer: QgsRasterLayer, ce: QgsContrastEnhancement, color: Color) -> None:
         match color:
             case RasterSymbologyRenderer.Color.GRAY:
