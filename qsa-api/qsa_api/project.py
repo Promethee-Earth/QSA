@@ -579,8 +579,7 @@ class QSAProject:
                     renderer.set_cumulative_cut_limits(rl)
         # save
         path = self._qgis_project_dir / f"{name}.qml"
-        rl.saveNamedStyle(
-            path.as_posix(), categories=QgsMapLayer.AllStyleCategories)
+        rl.saveNamedStyle(path.as_posix(), categories=QgsMapLayer.AllStyleCategories)
         return True, ""
 
     def _add_style_vector(self, name: str, symbology: dict, rendering: dict) -> (bool | str):
