@@ -1,42 +1,41 @@
 # coding: utf8
 
-import sys
 import shutil
 import sqlite3
+import sys
 from pathlib import Path
 
-from qgis.PyQt.QtGui import QColor
-from qgis.PyQt.QtCore import Qt, QDateTime
 from qgis.core import (
     Qgis,
-    QgsProject,
-    QgsWkbTypes,
-    QgsMapLayer,
-    QgsUnitTypes,
-    QgsDataSourceUri,
-    QgsFillSymbol,
-    QgsLineSymbol,
     QgsApplication,
-    QgsVectorLayer,
-    QgsRasterLayer,
-    QgsMarkerSymbol,
-    QgsDateTimeRange,
-    QgsRendererRange,
-    QgsRendererCategory,
-    QgsRasterMinMaxOrigin,
-    QgsContrastEnhancement,
-    QgsSvgMarkerSymbolLayer,
-    QgsSingleSymbolRenderer,
-    QgsGraduatedSymbolRenderer,
     QgsCategorizedSymbolRenderer,
+    QgsContrastEnhancement,
+    QgsDataSourceUri,
+    QgsDateTimeRange,
+    QgsFillSymbol,
+    QgsGraduatedSymbolRenderer,
+    QgsLineSymbol,
+    QgsMapLayer,
+    QgsMarkerSymbol,
+    QgsProject,
+    QgsRasterLayer,
     QgsRasterLayerTemporalProperties,
+    QgsRasterMinMaxOrigin,
+    QgsRendererCategory,
+    QgsRendererRange,
+    QgsSingleSymbolRenderer,
+    QgsSvgMarkerSymbolLayer,
+    QgsUnitTypes,
+    QgsVectorLayer,
+    QgsWkbTypes,
 )
+from qgis.PyQt.QtCore import QDateTime, Qt
+from qgis.PyQt.QtGui import QColor
 
 from .mapproxy import QSAMapProxy
-from .vector import VectorSymbologyRenderer
+from .raster import RasterOverview, RasterSymbologyRenderer
 from .utils import StorageBackend, config, logger
-from .raster import RasterSymbologyRenderer, RasterOverview
-
+from .vector import VectorSymbologyRenderer
 
 RENDERER_TAG_NAME = "renderer-v2"  # constant from core/symbology/renderer.h
 
@@ -534,7 +533,7 @@ class QSAProject:
         layer_type: str,
         symbology: dict,
         rendering: dict,
-    ) -> (bool, str):
+    ) -> (bool| str):
         t = self._layer_type(layer_type)
         match t :
             case Qgis.LayerType.Vector:
@@ -546,13 +545,10 @@ class QSAProject:
 
     def _add_style_raster(
         self, name: str, symbology: dict, rendering: dict
-    ) -> (bool, str):
-        # safety check
-        if "type" not in symbology:
-            return False, "`type` is missing in `symbology`"
-
-        if "properties" not in symbology:
-            return False, "`properties` is missing in `symbology`"
+    ) -> (bool| str):
+        check = self.__safety_check(symbology)
+        if not check[0]:
+            return check
 
         # init renderer
         tif = Path(__file__).resolve().parent / "raster" / "empty.tif"
@@ -561,91 +557,33 @@ class QSAProject:
         # symbology
         renderer = RasterSymbologyRenderer(symbology["type"])
         renderer.load(symbology["properties"])
-
-        # config rendering
-        if "gamma" in rendering:
-            rl.brightnessFilter().setGamma(float(rendering["gamma"]))
-
-        if "brightness" in rendering:
-            rl.brightnessFilter().setBrightness(int(rendering["brightness"]))
-
-        if "contrast" in rendering:
-            rl.brightnessFilter().setContrast(int(rendering["contrast"]))
-
-        if "saturation" in rendering:
-            rl.hueSaturationFilter().setSaturation(
-                int(rendering["saturation"])
-            )
+        renderer.process_renderering(rl, renderer)
+        
+        if not renderer.renderer:
+            return False, "Renderer not defined"
 
         # save style
-        if renderer.renderer:
-            rl.setRenderer(renderer.renderer)
+        rl.setRenderer(renderer.renderer)
 
-            # contrast enhancement needs to be managed after setting renderer
-            if renderer.contrast_algorithm:
-                rl.setContrastEnhancement(
-                    renderer.contrast_algorithm, renderer.contrast_limits
-                )
-
-                # user defined min/max
-                if (
-                    renderer.contrast_limits
-                    == QgsRasterMinMaxOrigin.Limits.None_
-                ):
-                    if (
-                        renderer.type
-                        == RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY
-                    ):
-                        ce = QgsContrastEnhancement(
-                            rl.renderer().contrastEnhancement()
-                        )
-                        if renderer.gray_min is not None:
-                            ce.setMinimumValue(renderer.gray_min)
-                        if renderer.gray_max is not None:
-                            ce.setMaximumValue(renderer.gray_max)
-                        rl.renderer().setContrastEnhancement(ce)
-                    elif (
-                        renderer.type
-                        == RasterSymbologyRenderer.Type.MULTI_BAND_COLOR
-                    ):
-                        # red
-                        red_ce = QgsContrastEnhancement(
-                            rl.renderer().redContrastEnhancement()
-                        )
-                        if renderer.red_min is not None:
-                            red_ce.setMinimumValue(renderer.red_min)
-                        if renderer.red_max is not None:
-                            red_ce.setMaximumValue(renderer.red_max)
-                        rl.renderer().setRedContrastEnhancement(red_ce)
-
-                        # green
-                        green_ce = QgsContrastEnhancement(
-                            rl.renderer().greenContrastEnhancement()
-                        )
-                        if renderer.green_min is not None:
-                            green_ce.setMinimumValue(renderer.green_min)
-                        if renderer.green_max is not None:
-                            green_ce.setMaximumValue(renderer.green_max)
-                        rl.renderer().setGreenContrastEnhancement(green_ce)
-
-                        # blue
-                        blue_ce = QgsContrastEnhancement(
-                            rl.renderer().blueContrastEnhancement()
-                        )
-                        if renderer.blue_min is not None:
-                            blue_ce.setMinimumValue(renderer.blue_min)
-                        if renderer.blue_max is not None:
-                            blue_ce.setMaximumValue(renderer.blue_max)
-                        rl.renderer().setBlueContrastEnhancement(blue_ce)
-
-            # save
-            path = self._qgis_project_dir / f"{name}.qml"
-            rl.saveNamedStyle(
-                path.as_posix(), categories=QgsMapLayer.AllStyleCategories
-            )
-            return True, ""
-
-        return False, "Error"
+        # contrast enhancement needs to be managed after setting renderer
+        if renderer.contrast_algorithm:
+            rl.setContrastEnhancement(renderer.contrast_algorithm, renderer.contrast_limits)
+            match renderer.contrast_limits:
+                case QgsRasterMinMaxOrigin.Limits.None_:
+                    renderer.set_user_defined_limits(rl)
+                case QgsRasterMinMaxOrigin.Limits.CumulativeCut:
+                    renderer.set_cumulative_cut_limits(rl)
+        # save
+        path = self._qgis_project_dir / f"{name}.qml"
+        rl.saveNamedStyle(path.as_posix(), categories=QgsMapLayer.AllStyleCategories)
+        return True, ""
+        
+    def __safety_check(self,symbology: dict) -> (bool | str):
+            # safety check
+        if "type" not in symbology:
+            return False, "`type` is missing in `symbology`"
+        if "properties" not in symbology:
+            return False, "`properties` is missing in `symbology`"
   
     def _add_style_vector(
         self, name: str, symbology: dict, rendering: dict
