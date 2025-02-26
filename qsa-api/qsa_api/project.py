@@ -567,9 +567,8 @@ class QSAProject:
             return False, "Renderer not defined"
 
         # save style
-        rl.setRenderer(renderer.renderer)
-
         # contrast enhancement needs to be managed after setting renderer
+        rl.setRenderer(renderer.renderer)
         if renderer.contrast_algorithm:
             rl.setContrastEnhancement(renderer.contrast_algorithm, renderer.contrast_limits)
             match renderer.contrast_limits:
