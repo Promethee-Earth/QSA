@@ -1,14 +1,15 @@
 # coding: utf8
 
+import logging
 import os
 import sys
-import boto3
-import logging
 import threading
 from enum import Enum
 from pathlib import Path
-from flask import current_app
+
+import boto3
 from botocore.exceptions import ClientError
+from flask import current_app
 
 from .config import QSAConfig
 
@@ -90,7 +91,7 @@ class ProgressPercentage:
             sys.stdout.flush()
 
 
-def s3_bucket_upload(bucket: str, source: str, dest: str) -> (bool, str):
+def s3_bucket_upload(bucket: str, source: str, dest: str) -> (bool | str):
 
     size = float(os.path.getsize(source) >> 20)
 
@@ -105,7 +106,7 @@ def s3_bucket_upload(bucket: str, source: str, dest: str) -> (bool, str):
             dest,
             Callback=ProgressPercentage(source),
         )
-    except ClientError as e:
+    except ClientError:
         return False, "Upload to S3 bucket failed"
 
     return True, ""

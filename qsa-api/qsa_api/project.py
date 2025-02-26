@@ -147,12 +147,12 @@ class QSAProject:
 
         return m
 
-    def cache_metadata(self) -> (dict, str):
+    def cache_metadata(self) -> (dict | str):
         if self._mapproxy_enabled:
             return QSAMapProxy(self.name).metadata(), ""
         return {}, "Cache is disabled"
 
-    def cache_reset(self) -> (bool, str):
+    def cache_reset(self) -> (bool | str):
         if self._mapproxy_enabled:
             mp = QSAMapProxy(self.name)
             rc, err = mp.read()
@@ -187,7 +187,7 @@ class QSAProject:
         con.close()
         return default_style
 
-    def style(self, name: str) -> (dict, str):
+    def style(self, name: str) -> (dict | str):
         if name not in self.styles:
             return {}, "Invalid style"
 
@@ -246,9 +246,7 @@ class QSAProject:
             return infos
         return {}
 
-    def layer_update_style(
-        self, layer_name: str, style_name: str, current: bool
-    ) -> (bool, str):
+    def layer_update_style(self, layer_name: str, style_name: str, current: bool) -> (bool | str):
         # if layer_name not in self.layers:
         #     return False, f"Layer '{layer_name}' does not exist"
 
@@ -276,12 +274,9 @@ class QSAProject:
         self.debug("project.mapLayersByName")
         if style_name not in layer.styleManager().styles():
             self.debug(f"Add new style {style_name} in style manager")
-            l = layer.clone()
-            l.loadNamedStyle(style_path.as_posix())  # set "default" style
-
-            layer.styleManager().addStyle(
-                style_name, l.styleManager().style("default")
-            )
+            clone = layer.clone()
+            clone.loadNamedStyle(style_path.as_posix())  # set "default" style
+            layer.styleManager().addStyle(style_name, clone.styleManager().style("default"))
 
         if current:
             self.debug(f"Set default style {style_name}")
@@ -356,7 +351,7 @@ class QSAProject:
 
             return self.name in projects and self._qgis_projects_dir().exists()
 
-    def create(self, author: str) -> (bool, str):
+    def create(self, author: str) -> (bool | str):
         if self.exists():
             return False
 
@@ -419,7 +414,7 @@ class QSAProject:
         epsg_code: int,
         overview: bool,
         datetime: QDateTime | None,
-    ) -> (bool, str):
+    ) -> (bool | str):
         t = self._layer_type(layer_type)
         if t is None:
             return False, "Invalid layer type"
@@ -547,7 +542,7 @@ class QSAProject:
                 return self._add_style_vector(name, symbology, rendering)
             case  Qgis.LayerType.Raster:
                 return self._add_style_raster(name, symbology, rendering)
-            case other:
+            case _:
                 return False, "Invalid layer type"
 
     def _add_style_raster(self, name: str, symbology: dict, rendering: dict) -> (bool | str):
@@ -570,7 +565,8 @@ class QSAProject:
         # contrast enhancement needs to be managed after setting renderer
         rl.setRenderer(renderer.renderer)
         if renderer.contrast_algorithm:
-            rl.setContrastEnhancement(renderer.contrast_algorithm, renderer.contrast_limits)
+            rl.setContrastEnhancement(
+                renderer.contrast_algorithm, renderer.contrast_limits)
             match renderer.contrast_limits:
                 case QgsRasterMinMaxOrigin.Limits.None_:
                     renderer.set_user_defined_limits(rl)
@@ -578,7 +574,8 @@ class QSAProject:
                     renderer.set_cumulative_cut_limits(rl)
         # save
         path = self._qgis_project_dir / f"{name}.qml"
-        rl.saveNamedStyle(path.as_posix(), categories=QgsMapLayer.AllStyleCategories)
+        rl.saveNamedStyle(
+            path.as_posix(), categories=QgsMapLayer.AllStyleCategories)
         return True, ""
 
     def _add_style_vector(self, name: str, symbology: dict, rendering: dict) -> (bool | str):
@@ -609,7 +606,7 @@ class QSAProject:
             return True, ""
 
         return False, "Error"
-        
+
     def __safety_check(self, symbology: dict) -> (bool | str):
         # safety check
         if "type" not in symbology:
@@ -671,7 +668,7 @@ class QSAProject:
                     range = QgsRendererCategory(
                         categorized_value["value"], symbol, "test")
                     ranges.append(range)
-            case other:
+            case _:
                 return None  # Not implement
 
         render = QgsCategorizedSymbolRenderer(attribut, ranges)
@@ -732,7 +729,7 @@ class QSAProject:
                     range = QgsRendererRange(
                         graduated_value["min"], graduated_value["max"], symbol, "test")
                     ranges.append(range)
-            case other:
+            case _:
                 return None  # Not implement
 
         render = QgsGraduatedSymbolRenderer(attribut, ranges)
@@ -780,7 +777,7 @@ class QSAProject:
                 svg_layer.setSize(properties["size"])
                 symbol.setSizeUnit(QgsUnitTypes.RenderMillimeters)
                 symbol.changeSymbolLayer(0, svg_layer)
-            case other:
+            case _:
                 return None  # Not implement
 
         render = QgsSingleSymbolRenderer(symbol)
