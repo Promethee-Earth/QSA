@@ -414,7 +414,7 @@ class RasterSymbologyRenderer:
 
     def __debug(self, msg: str) -> None:
         caller = f"{self.__class__.__name__}.{sys._getframe().f_back.f_code.co_name}"
-        msg = f"[{caller}][{self.type}:{self.type}] {msg}"
+        msg = f"[{caller}][{self.type.value}] {msg}"
         logger().debug(msg)
 
     # serializer methods ###################################################################################################
