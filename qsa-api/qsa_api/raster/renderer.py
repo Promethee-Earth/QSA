@@ -360,10 +360,10 @@ class RasterSymbologyRenderer:
                     pass
 
             color_ramp = QgsStyle().defaultStyle().colorRamp("Spectral")
-            color_ramp = QgsStyle().defaultStyle().colorRamp(
-                ramp["name"]) if ramp["name"] else None
-            color_ramp = QgsGradientColorRamp.create(
-                ramp) if ramp["color1"] and ramp["color2"] else None
+            if ramp["name"]:
+                color_ramp = QgsStyle().defaultStyle().colorRamp(ramp["name"])
+            if ramp["color1"] and ramp["color2"]:
+                color_ramp = QgsGradientColorRamp.create(ramp)
 
             ramp_shader = QgsColorRampShader()
             ramp_shader.setSourceColorRamp(color_ramp)
