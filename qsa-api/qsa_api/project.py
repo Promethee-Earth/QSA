@@ -553,7 +553,7 @@ class QSAProject:
         # symbology
         renderer = RasterSymbologyRenderer(symbology["type"])
         renderer.load(symbology["properties"])
-        renderer.process_renderering(rl, renderer)
+        renderer.process_renderering(rl, rendering)
         if not renderer.renderer:
             return False, "Renderer not defined"
 
