@@ -279,15 +279,14 @@ class QSAProject:
             self.debug(f"Set default style {style_name}")
             layer.styleManager().setCurrentStyle(style_name)
 
-            # refresh min/max for the current layer if necessary
-            # (because the style is built on an empty geotiff)
+            # refresh min/max for the current layer if necessary (because the style is built on an empty geotiff)
             if layer.type() == QgsMapLayer.RasterLayer:
                 self.debug("Refresh symbology renderer min/max")
-                renderer = RasterSymbologyRenderer(layer.renderer().type())
-                renderer.refresh_min_max(layer)
                 self.debug(
                     f"Refresh symbology renderer min/max done: {layer.renderer().minMaxOrigin().limits()}")
-
+                renderer = RasterSymbologyRenderer(layer.renderer().type())
+                renderer.refresh_min_max(layer)
+                
         self.debug("Write project")
         project.write()
 
