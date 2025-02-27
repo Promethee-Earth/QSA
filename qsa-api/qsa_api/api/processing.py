@@ -1,15 +1,13 @@
 # coding: utf8
 
-from jsonschema import validate
 from flask import Blueprint, jsonify, request
+from jsonschema import validate
 from jsonschema.exceptions import ValidationError
 
-from ..utils import logger
+from ..processing import Histogram, RasterCalculator
 from ..project import QSAProject
-from ..processing import RasterCalculator, Histogram
-
+from ..utils import logger
 from .utils import log_request
-
 
 processing = Blueprint("processing", __name__)
 
@@ -77,17 +75,10 @@ def raster_histogram(project: str, layer: str):
         except ValidationError as e:
             return {"error": e.message}, 415
 
-        mini = None
-        if "min" in data:
-            mini = data["min"]
+        mini = data["min"] if data["min"] else None
+        maxi = data["max"] if data["max"] else None
 
-        maxi = None
-        if "max" in data:
-            maxi = data["max"]
-
-        count = 1000
-        if "count" in data:
-            count = data["count"]
+        count = data["count"] if data["count"] else 1000
 
         psql_schema = request.args.get("schema", default="public")
         proj = QSAProject(project, psql_schema)

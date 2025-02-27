@@ -539,8 +539,10 @@ class QSAProject:
         t = self._layer_type(layer_type)
         match t:
             case Qgis.LayerType.Vector:
+                self.debug("Add style for vector layer")
                 return self._add_style_vector(name, symbology, rendering)
             case  Qgis.LayerType.Raster:
+                self.debug("Add style for raster layer")
                 return self._add_style_raster(name, symbology, rendering)
             case _:
                 return False, "Invalid layer type"

@@ -80,6 +80,7 @@ class RasterSymbologyRenderer:
         if not self.renderer:
             return False, "Invalid renderer"
         if "contrast_enhancement" in properties:
+            self.__debug("Load contrast enhancement")
             self._load_contrast_enhancement(properties["contrast_enhancement"])
         match self.type:
             case RasterSymbologyRenderer.Type.MULTI_BAND_COLOR:
