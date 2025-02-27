@@ -405,13 +405,13 @@ class RasterSymbologyRenderer:
         
 
     def _load_cumulative_cut(self, properties: dict) -> None:
-        if "CumulativeCutUpper" in properties:
+        if "cumulative_cut_upper" in properties:
             self.cumulative_cut_upper = float(
-                properties["CumulativeCutUpper"] / 100)
+                properties["cumulative_cut_upper"] / 100)
             self.__debug(f"cumulative cut upper: {self.cumulative_cut_upper}")
-        if "CumulativeCutLower" in properties:
+        if "cumulative_cut_lower" in properties:
             self.cumulative_cut_lower = float(
-                properties["CumulativeCutLower"] / 100)
+                properties["cumulative_cut_lower"] / 100)
             self.__debug(f"cumulative cut lower: {self.cumulative_cut_lower}")
 
     def __debug(self, msg: str) -> None:
