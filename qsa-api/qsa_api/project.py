@@ -263,11 +263,8 @@ class QSAProject:
         project.read(self._qgis_project_uri)
 
         self.debug(f"project.read : {len(project.mapLayers(False))}")
-
-        for a in project.mapLayers(False):
-            self.debug(f"layer_name : {a}")
-
         self.debug(f"Layer name use : {layer_name.strip()}")
+        
         style_path = self._qgis_project_dir / f"{style_name}.qml"
         layer = project.mapLayersByName(layer_name.strip())[0]
 
