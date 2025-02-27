@@ -190,6 +190,8 @@ class RasterSymbologyRenderer:
         green_ce = QgsContrastEnhancement(renderer.greenContrastEnhancement())
         blue_ce = QgsContrastEnhancement(renderer.blueContrastEnhancement())
         alg = red_ce.contrastEnhancementAlgorithm()
+        self.__debug(f"contrast enhancement algorithm: {alg}")
+        self.__debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
         if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
             return
 
@@ -242,7 +244,8 @@ class RasterSymbologyRenderer:
     def _refresh_min_max_singlebandgray(self, layer: QgsRasterLayer) -> None:
         ce = QgsContrastEnhancement(layer.renderer().contrastEnhancement())
         alg = ce.contrastEnhancementAlgorithm()
-        alg = ContrastEnhancementAlgorithm.UserDefinedEnhancement
+        self.__debug(f"contrast enhancement algorithm: {alg}")
+        self.__debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
         if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
             return
 
@@ -267,6 +270,7 @@ class RasterSymbologyRenderer:
         layer.renderer().setContrastEnhancement(ce)
 
     def _refresh_min_max_singlebandpseudocolor(self, layer: QgsRasterLayer) -> None:
+        self.__debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
         match layer.renderer().minMaxOrigin().limits():
             case QgsRasterMinMaxOrigin.Limits.MinMax:
                 self.__debug("compute min/max for singlebandpseudocolor")
@@ -377,28 +381,28 @@ class RasterSymbologyRenderer:
             self.renderer.shader().rasterShaderFunction().classifyColorRamp()
 
     def _load_contrast_enhancement(self, properties: dict) -> None:
-        if "algorithm" in properties:
-            alg = properties["algorithm"]
-            match alg:
-                case "StretchToMinimumMaximum":
-                    self.contrast_algorithm = (
-                        ContrastEnhancementAlgorithm.StretchToMinimumMaximum)
-                case "NoEnhancement":
-                    self.contrast_algorithm = (
-                        ContrastEnhancementAlgorithm.NoEnhancement)
-
-        if "limits_min_max" in properties:
-            limits = properties["limits_min_max"]
-            match limits:
-                case "UserDefined":
-                    self.contrast_limits = (QgsRasterMinMaxOrigin.Limits.None_)
-                case "MinMax":
-                    self.contrast_limits = (
-                        QgsRasterMinMaxOrigin.Limits.MinMax)
-                case "CumulativeCut":
-                    self.contrast_limits = (
-                        QgsRasterMinMaxOrigin.Limits.CumulativeCut)
-                    self._load_cumulative_cut(properties)
+        alg = properties["algorithm"] if properties["algorithm"] else None
+        match alg:
+            case "StretchToMinimumMaximum":
+                self.contrast_algorithm = (
+                    ContrastEnhancementAlgorithm.StretchToMinimumMaximum)
+            case "NoEnhancement":
+                self.contrast_algorithm = (
+                    ContrastEnhancementAlgorithm.NoEnhancement)
+        limits = properties["limits_min_max"] if properties["limits_min_max"] else None
+        match limits:
+            case "UserDefined":
+                self.contrast_limits = (QgsRasterMinMaxOrigin.Limits.None_)
+            case "MinMax":
+                self.contrast_limits = (
+                    QgsRasterMinMaxOrigin.Limits.MinMax)
+            case "CumulativeCut":
+                self.contrast_limits = (
+                    QgsRasterMinMaxOrigin.Limits.CumulativeCut)
+                self._load_cumulative_cut(properties)
+        self.__debug(f"contrast enhancement algorithm: {self.contrast_algorithm}")
+        self.__debug(f"limits: {self.contrast_limits}")
+        
 
     def _load_cumulative_cut(self, properties: dict) -> None:
         if "CumulativeCutUpper" in properties:
