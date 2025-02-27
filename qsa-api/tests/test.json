@@ -1,4 +1,9 @@
 {
+    "current" : true,
+    "name" : "d12ff89f-dac8-4cd2-a771-b4fc08f929bf"
+}
+
+{
     "NameProject": "11929",
     "rendering": {
         "opacity": 100,
@@ -8,26 +13,34 @@
         "saturation": 0
     },
     "symbology": {
-        "type": "singlebandpseudocolor",
+        "type": "multibandcolor",
         "symbol": "",
         "properties": {
-            "band": {
+            "blue": {
                 "band": 1,
-                "Name": "None"
+                "max": 15088.0,
+                "min": 309.0,
+                "Name": null
+            },
+            "red": {
+                "band": 1,
+                "max": 15088.0,
+                "min": 309.0,
+                "Name": null
+            },
+            "green": {
+                "band": 1,
+                "max": 15088.0,
+                "min": 309.0,
+                "Name": null
             },
             "contrast_enhancement": {
                 "algorithm": "StretchToMinimumMaximum",
-                "limits_min_max": "MinMax",
-                "percentile": 0.0
-            },
-            "ramp": {
-                "color1": "0,0,0",
-                "color2": "255,255,255",
-                "interpolation": "Linear",
-                "stops": "0.4948;94,94,94"
+                "limits_min_max": "CumulativeCut",
+                "percentile": 20.0
             }
         }
     },
     "type": "raster",
-    "name": "b0d7c847-eb1a-4034-891e-e7f81b3a55d2"
+    "name": "d12ff89f-dac8-4cd2-a771-b4fc08f929bf"
 }

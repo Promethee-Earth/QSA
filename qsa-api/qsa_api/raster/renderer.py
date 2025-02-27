@@ -408,9 +408,11 @@ class RasterSymbologyRenderer:
         if "CumulativeCutUpper" in properties:
             self.cumulative_cut_upper = float(
                 properties["CumulativeCutUpper"] / 100)
+            self.__debug(f"cumulative cut upper: {self.cumulative_cut_upper}")
         if "CumulativeCutLower" in properties:
             self.cumulative_cut_lower = float(
                 properties["CumulativeCutLower"] / 100)
+            self.__debug(f"cumulative cut lower: {self.cumulative_cut_lower}")
 
     def __debug(self, msg: str) -> None:
         caller = f"{self.__class__.__name__}.{sys._getframe().f_back.f_code.co_name}"
