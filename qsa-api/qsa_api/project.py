@@ -529,13 +529,7 @@ class QSAProject:
 
         return True, ""
 
-    def add_style(
-        self,
-        name: str,
-        layer_type: str,
-        symbology: dict,
-        rendering: dict,
-    ) -> (bool | str):
+    def add_style(self, name: str, layer_type: str, symbology: dict, rendering: dict) -> (bool | str):
         t = self._layer_type(layer_type)
         match t:
             case Qgis.LayerType.Vector:
@@ -615,6 +609,7 @@ class QSAProject:
             return False, "`type` is missing in `symbology`"
         if "properties" not in symbology:
             return False, "`properties` is missing in `symbology`"
+        return True, ""
 
     def _create_categorized_style(self, symbology: dict) -> QgsCategorizedSymbolRenderer:
         symbol = symbology["symbol"]
