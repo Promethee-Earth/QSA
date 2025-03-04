@@ -29,7 +29,7 @@ class RasterCalculator:
         self.expression = expression
         self.project_uri = project_uri
 
-    def process(self, out_uri: str) -> (bool, str):
+    def process(self, out_uri: str) -> (bool | str):
         # Some kind of cache is bothering us because when a raster layer is
         # added on S3, we cannot open it with GDAL provider later. The
         # QgsApplication needs to be restarted... why???

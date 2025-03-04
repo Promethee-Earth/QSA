@@ -3,10 +3,10 @@
 import sys
 from pathlib import Path
 
-from qgis.core import QgsRasterLayer, Qgis
+from qgis.core import Qgis, QgsRasterLayer
 
 from ..config import QSAConfig
-from ..utils import logger, s3_parse_uri, s3_bucket_upload
+from ..utils import logger, s3_bucket_upload, s3_parse_uri
 
 
 class RasterOverview:
@@ -16,7 +16,7 @@ class RasterOverview:
     def is_valid(self):
         return self.layer.dataProvider().hasPyramids()
 
-    def build(self) -> (bool, str):
+    def build(self) -> (bool | str):
         ds = self.layer.source()
 
         # check if rasters stored on S3

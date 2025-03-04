@@ -1,6 +1,6 @@
 # coding: utf8
 
-from multiprocessing import Process, Manager
+from multiprocessing import Manager, Process
 
 from qgis.core import QgsProject, QgsRectangle
 
@@ -10,7 +10,7 @@ class Histogram:
         self.layer = layer
         self.project_uri = project_uri
 
-    def process(self, mini, maxi, count) -> (bool, dict):
+    def process(self, mini, maxi, count) -> (bool | dict):
         # Some kind of cache is bothering us because when a raster layer is
         # added on S3, we cannot open it with GDAL provider later. The
         # QgsApplication needs to be restarted... why???
