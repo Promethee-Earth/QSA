@@ -91,7 +91,7 @@ def raster_histogram(project: str, layer: str):
                     }
                 histo = Histogram(proj._qgis_project_uri, layer)
                 histo_table = histo.process(mini, maxi, count)
-                return jsonify(histo_table, 201)
+                return jsonify(histo_table), 200
             else:
                 return {"error": "Layer does not exist"}, 415
         else:
