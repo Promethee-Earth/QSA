@@ -1,9 +1,6 @@
 # coding: utf8
-
 from multiprocessing import Manager, Process
-
 from qgis.core import QgsProject, QgsRectangle
-
 
 class Histogram:
     def __init__(self, project_uri: str, layer: str) -> None:

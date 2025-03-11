@@ -75,10 +75,10 @@ def raster_histogram(project: str, layer: str):
         except ValidationError as e:
             return {"error": e.message}, 415
 
-        mini = data["min"] if data["min"] else None
-        maxi = data["max"] if data["max"] else None
+        mini = data["min"] if "min" in data else None
+        maxi = data["max"] if "max" in data else None
 
-        count = data["count"] if data["count"] else 1000
+        count = data["count"] if "count" in data else 1000
 
         psql_schema = request.args.get("schema", default="public")
         proj = QSAProject(project, psql_schema)
@@ -90,7 +90,8 @@ def raster_histogram(project: str, layer: str):
                         "error": "Histogram is available for raster layer only"
                     }
                 histo = Histogram(proj._qgis_project_uri, layer)
-                return jsonify(histo.process(mini, maxi, count)), 201
+                histo_table = histo.process(mini, maxi, count)
+                return jsonify(histo_table, 201)
             else:
                 return {"error": "Layer does not exist"}, 415
         else:
