@@ -1,4 +1,9 @@
 {
+    "type": "raster",
+    "properties": {}
+}
+
+{
     "current" : true,
     "name" : "d12ff89f-dac8-4cd2-a771-b4fc08f929bf"
 }
