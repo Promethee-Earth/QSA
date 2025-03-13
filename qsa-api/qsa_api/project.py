@@ -558,6 +558,8 @@ class QSAProject:
         rl.setRenderer(renderer.renderer)
         if renderer.contrast_algorithm:
             renderer.set_contrast_enhancement(rl)
+        else:
+            self.debug("No contrast algorithm defined")
         # save
         path = self._qgis_project_dir / f"{name}.qml"
         rl.saveNamedStyle(
