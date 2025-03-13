@@ -160,10 +160,9 @@ class RasterSymbologyRenderer:
         raster.renderer().setMinMaxOrigin(min_max_cut)
 
     def refresh_min_max(self, layer: QgsRasterLayer) -> None:
-        if (layer.renderer().minMaxOrigin().limits() == QgsRasterMinMaxOrigin.Limits.None_):
+        if layer.renderer().minMaxOrigin().limits() == QgsRasterMinMaxOrigin.Limits.None_ or self.contrast_algorithm == ContrastEnhancementAlgorithm.NoEnhancement:
             self.__debug("No min/max refresh needed")
             return
-        self.__debug("Refresh min/max")
         match self.type:
             case RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY:
                 self.__debug("Refresh min/max for singlebandgray")
