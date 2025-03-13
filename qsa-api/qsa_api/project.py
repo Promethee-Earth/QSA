@@ -557,7 +557,7 @@ class QSAProject:
         # contrast enhancement needs to be managed after setting renderer
         rl.setRenderer(renderer.renderer)
         self.debug(f"Contrast enhancement: {renderer.contrast_algorithm}")
-        if renderer.contrast_algorithm:
+        if renderer.contrast_algorithm != None:
             renderer.set_contrast_enhancement(rl)
         else:
             self.debug("No contrast algorithm defined")
