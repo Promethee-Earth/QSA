@@ -213,7 +213,7 @@ class RasterSymbologyRenderer:
         self.__debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
         if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
             self.__debug("No min/max refresh needed")
-            layer.renderer().setNodataColor(Qt.GlobalColor(20))
+            # layer.renderer().setNodataColor(Qt.GlobalColor(19))
             return
 
         red_band = renderer.redBand()
