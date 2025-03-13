@@ -214,6 +214,7 @@ class RasterSymbologyRenderer:
         self.__debug(f"contrast enhancement algorithm: {alg}")
         self.__debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
         if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
+            self.__debug("No min/max refresh needed")
             return
 
         red_band = renderer.redBand()
@@ -268,8 +269,8 @@ class RasterSymbologyRenderer:
         self.__debug(f"contrast enhancement algorithm: {alg}")
         self.__debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
         if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
+            self.__debug("No min/max refresh needed")
             return
-
         match layer.renderer().minMaxOrigin().limits():
             case QgsRasterMinMaxOrigin.Limits.MinMax:
                 self.__debug("compute min/max for singlebandgray")
