@@ -18,8 +18,7 @@ from qgis.core import (
     QgsStyle,
     QgsRasterTransparency,
 )
-
-
+from PyQt5.QtCore import Qt
 from ..utils import logger
 
 ContrastEnhancementAlgorithm = (
@@ -214,7 +213,7 @@ class RasterSymbologyRenderer:
         self.__debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
         if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
             self.__debug("No min/max refresh needed")
-            layer.renderer().setNodataColor(19)
+            layer.renderer().setNodataColor(Qt.GlobalColor(20))
             return
 
         red_band = renderer.redBand()
