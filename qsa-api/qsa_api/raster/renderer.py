@@ -214,16 +214,7 @@ class RasterSymbologyRenderer:
         self.__debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
         if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
             self.__debug("No min/max refresh needed")
-            transparency = QgsRasterTransparency.TransparentThreeValuePixel()
-            tr_list = []
-            transparency.blue = 0
-            transparency.green = 0
-            transparency.red = 0
-            transparency.percentTransparent = 100
-            tr_list.append(transparency)
-            layer.renderer().rasterTransparency().setTransparentThreeValuePixelList(tr_list)
-
-            layer.renderer().setNodataColor(20)
+            layer.renderer().setNodataColor(19)
             return
 
         red_band = renderer.redBand()
