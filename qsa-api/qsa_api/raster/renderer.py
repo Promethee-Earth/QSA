@@ -16,7 +16,7 @@ from qgis.core import (
     QgsSingleBandGrayRenderer,
     QgsSingleBandPseudoColorRenderer,
     QgsStyle,
-    QgsRasterTransparency
+    QgsRasterTransparency,
 )
 
 from ..utils import logger
@@ -215,8 +215,8 @@ class RasterSymbologyRenderer:
             self.__debug("No min/max refresh needed")
             transparency = QgsRasterTransparency.TransparentSingleValuePixel()
             tr_list = []
-            transparency.min = 0  # Or another value
-            transparency.max = 0  # Or another value
+            transparency.min = blue_ce.minimumValue # Or another value
+            transparency.max = blue_ce.maximumValue  # Or another value
             transparency.percentTransparent = 100  # Or another value
             tr_list.append(transparency)  # You can add more item in this list.
             layer.renderer().rasterTransparency().setTransparentSingleValuePixelList(tr_list)
