@@ -97,6 +97,9 @@ class RasterSymbologyRenderer:
     def process_renderering(self, raster: QgsRasterLayer, rendering: dict) -> None:
         """Apply rendering to the template raster"""
         # config rendering
+        if self.contrast_algorithm == ContrastEnhancementAlgorithm.NoEnhancement:
+            self.__debug("No rendering needed")
+            return
         mapping = {
             "gamma": lambda v: raster.brightnessFilter().setGamma(float(v)),
             "brightness": lambda v: raster.brightnessFilter().setBrightness(int(v)),
