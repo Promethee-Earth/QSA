@@ -110,6 +110,7 @@ class RasterSymbologyRenderer:
     def set_contrast_enhancement(self, raster: QgsRasterLayer) -> None:
         match self.contrast_algorithm:
             case ContrastEnhancementAlgorithm.StretchToMinimumMaximum:
+                self.__debug("Stretch to min/max")
                 raster.setContrastEnhancement(
                     self.contrast_algorithm, self.contrast_limits)
                 match self.contrast_limits:
@@ -118,6 +119,7 @@ class RasterSymbologyRenderer:
                     case QgsRasterMinMaxOrigin.Limits.CumulativeCut:
                         self.set_cumulative_cut_limits(raster)
             case ContrastEnhancementAlgorithm.NoEnhancement:
+                self.__debug("No enhancement")
                 raster.setContrastEnhancement(self.contrast_algorithm)
 
     def set_user_defined_limits(self, raster: QgsRasterLayer) -> None:
