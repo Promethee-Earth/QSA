@@ -213,12 +213,13 @@ class RasterSymbologyRenderer:
         self.__debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
         if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
             self.__debug("No min/max refresh needed")
-            transparency = QgsRasterTransparency.TransparentSingleValuePixel()
+            transparency = QgsRasterTransparency.TransparentThreeValuePixel()
             tr_list = []
-            transparency.min = blue_ce.minimumValue # Or another value
-            transparency.max = blue_ce.maximumValue  # Or another value
-            transparency.percentTransparent = 100  # Or another value
-            tr_list.append(transparency)  # You can add more item in this list.
+            transparency.blue = 0
+            transparency.green = 0
+            transparency.red = 0
+            transparency.percentTransparent = 100
+            tr_list.append(transparency)
             layer.renderer().rasterTransparency().setTransparentSingleValuePixelList(tr_list)
             return
 
