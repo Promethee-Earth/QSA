@@ -82,21 +82,24 @@ class RasterSymbologyRenderer:
         if "contrast_enhancement" in properties:
             self.__debug("Load contrast enhancement")
             self._load_contrast_enhancement(properties["contrast_enhancement"])
-        match self.type:
-            case RasterSymbologyRenderer.Type.MULTI_BAND_COLOR:
-                self.__debug("Load multibandcolor properties")
-                self._load_multibandcolor_properties(properties)
-            case RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY:
-                self.__debug("Load singlebandgray properties")
-                self._load_singlebandgray_properties(properties)
-            case RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR:
-                self.__debug("Load singlebandpseudocolor properties")
-                self._load_singlebandpseudocolor_properties(properties)
+        if self.contrast_algorithm != ContrastEnhancementAlgorithm.NoEnhancement:
+            match self.type:
+                case RasterSymbologyRenderer.Type.MULTI_BAND_COLOR:
+                    self.__debug("Load multibandcolor properties")
+                    self._load_multibandcolor_properties(properties)
+                case RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY:
+                    self.__debug("Load singlebandgray properties")
+                    self._load_singlebandgray_properties(properties)
+                case RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR:
+                    self.__debug("Load singlebandpseudocolor properties")
+                    self._load_singlebandpseudocolor_properties(properties)
         return True, ""
 
     def process_renderering(self, raster: QgsRasterLayer, rendering: dict) -> None:
         """Apply rendering to the template raster"""
         # config rendering
+        if self.contrast_algorithm == ContrastEnhancementAlgorithm.NoEnhancement:
+            return
         mapping = {
             "gamma": lambda v: raster.brightnessFilter().setGamma(float(v)),
             "brightness": lambda v: raster.brightnessFilter().setBrightness(int(v)),
@@ -400,6 +403,9 @@ class RasterSymbologyRenderer:
                 self.contrast_limits = (
                     QgsRasterMinMaxOrigin.Limits.CumulativeCut)
                 self._load_cumulative_cut(properties)
+            case None:
+                self.contrast_limits = (
+                    QgsRasterMinMaxOrigin.Limits.None_)
         self.__debug(f"contrast enhancement algorithm: {self.contrast_algorithm}")
         self.__debug(f"limits: {self.contrast_limits}")
         

@@ -445,7 +445,7 @@ class QSAProject:
             lyr = QgsRasterLayer(datasource, name, provider)
 
             lyr.setContrastEnhancement(
-                QgsContrastEnhancement.ContrastEnhancementAlgorithm.NoEnhancement)
+                QgsContrastEnhancement.ContrastEnhancementAlgorithm.StretchToMinimumMaximum)
 
             ovr = RasterOverview(lyr)
             if overview:
