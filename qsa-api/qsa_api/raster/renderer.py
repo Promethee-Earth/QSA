@@ -130,7 +130,6 @@ class RasterSymbologyRenderer:
                 ce = QgsContrastEnhancement(
                     raster.renderer().contrastEnhancement())
                 self._set_min_max(raster, ce, self.Color.GRAY)
-
             case RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR:
                 return
             case RasterSymbologyRenderer.Type.MULTI_BAND_COLOR:
@@ -159,8 +158,10 @@ class RasterSymbologyRenderer:
 
     def refresh_min_max(self, layer: QgsRasterLayer) -> None:
         if (layer.renderer().minMaxOrigin().limits() == QgsRasterMinMaxOrigin.Limits.None_):
+            self.__debug("No min/max refresh needed")
             return
         match self.type:
+            self.__debug("Refresh min/max")
             case RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY:
                 self.__debug("Refresh min/max for singlebandgray")
                 self._refresh_min_max_singlebandgray(layer)
