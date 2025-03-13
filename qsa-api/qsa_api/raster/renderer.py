@@ -82,7 +82,6 @@ class RasterSymbologyRenderer:
         if "contrast_enhancement" in properties:
             self.__debug("Load contrast enhancement")
             self._load_contrast_enhancement(properties["contrast_enhancement"])
-        if self.contrast_algorithm != ContrastEnhancementAlgorithm.NoEnhancement:
             match self.type:
                 case RasterSymbologyRenderer.Type.MULTI_BAND_COLOR:
                     self.__debug("Load multibandcolor properties")
@@ -98,8 +97,6 @@ class RasterSymbologyRenderer:
     def process_renderering(self, raster: QgsRasterLayer, rendering: dict) -> None:
         """Apply rendering to the template raster"""
         # config rendering
-        if self.contrast_algorithm == ContrastEnhancementAlgorithm.NoEnhancement:
-            return
         mapping = {
             "gamma": lambda v: raster.brightnessFilter().setGamma(float(v)),
             "brightness": lambda v: raster.brightnessFilter().setBrightness(int(v)),
@@ -109,6 +106,19 @@ class RasterSymbologyRenderer:
         for key, action in mapping.items():
             if key in rendering:
                 action(rendering[key])
+
+    def set_contrast_enhancement(self, raster: QgsRasterLayer) -> None:
+        match self.contrast_algorithm:
+            case ContrastEnhancementAlgorithm.StretchToMinimumMaximum:
+                raster.setContrastEnhancement(
+                    self.contrast_algorithm, self.contrast_limits)
+                match self.contrast_limits:
+                    case QgsRasterMinMaxOrigin.Limits.None_:
+                        self.set_user_defined_limits(raster)
+                    case QgsRasterMinMaxOrigin.Limits.CumulativeCut:
+                        self.set_cumulative_cut_limits(raster)
+            case ContrastEnhancementAlgorithm.NoEnhancement:
+                raster.setContrastEnhancement(self.contrast_algorithm)
 
     def set_user_defined_limits(self, raster: QgsRasterLayer) -> None:
         """Set user defined limits to the template raster"""
@@ -287,7 +297,8 @@ class RasterSymbologyRenderer:
                 layer.renderer().setClassificationMax(stats.maximumValue)
                 layer.renderer().shader().rasterShaderFunction().classifyColorRamp()
             case QgsRasterMinMaxOrigin.Limits.CumulativeCut:
-                self.__debug("compute cumulative cut for singlebandpseudocolor")
+                self.__debug(
+                    "compute cumulative cut for singlebandpseudocolor")
                 min_max = self._compute_cumulative_cut(layer)
                 layer.renderer().setClassificationMin(min_max[0])
                 layer.renderer().setClassificationMax(min_max[1])
@@ -403,12 +414,9 @@ class RasterSymbologyRenderer:
                 self.contrast_limits = (
                     QgsRasterMinMaxOrigin.Limits.CumulativeCut)
                 self._load_cumulative_cut(properties)
-            case None:
-                self.contrast_limits = (
-                    QgsRasterMinMaxOrigin.Limits.None_)
-        self.__debug(f"contrast enhancement algorithm: {self.contrast_algorithm}")
+        self.__debug(
+            f"contrast enhancement algorithm: {self.contrast_algorithm}")
         self.__debug(f"limits: {self.contrast_limits}")
-        
 
     def _load_cumulative_cut(self, properties: dict) -> None:
         if "cumulative_cut_upper" in properties:

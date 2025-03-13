@@ -557,13 +557,7 @@ class QSAProject:
         # contrast enhancement needs to be managed after setting renderer
         rl.setRenderer(renderer.renderer)
         if renderer.contrast_algorithm:
-            rl.setContrastEnhancement(
-                renderer.contrast_algorithm, renderer.contrast_limits)
-            match renderer.contrast_limits:
-                case QgsRasterMinMaxOrigin.Limits.None_:
-                    renderer.set_user_defined_limits(rl)
-                case QgsRasterMinMaxOrigin.Limits.CumulativeCut:
-                    renderer.set_cumulative_cut_limits(rl)
+            renderer.set_contrast_enhancement(rl)
         # save
         path = self._qgis_project_dir / f"{name}.qml"
         rl.saveNamedStyle(
