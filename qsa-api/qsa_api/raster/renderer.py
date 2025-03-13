@@ -267,6 +267,7 @@ class RasterSymbologyRenderer:
         self.__debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
         if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
             self.__debug("No min/max refresh needed")
+            layer.setProperty("contrast_enhancement", "NoEnhancement")
             return
         match layer.renderer().minMaxOrigin().limits():
             case QgsRasterMinMaxOrigin.Limits.MinMax:
