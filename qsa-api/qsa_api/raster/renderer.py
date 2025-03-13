@@ -19,6 +19,7 @@ from qgis.core import (
     QgsRasterTransparency,
 )
 
+
 from ..utils import logger
 
 ContrastEnhancementAlgorithm = (
@@ -220,7 +221,9 @@ class RasterSymbologyRenderer:
             transparency.red = 0
             transparency.percentTransparent = 100
             tr_list.append(transparency)
-            layer.renderer().rasterTransparency().setTransparentSingleValuePixelList(tr_list)
+            layer.renderer().rasterTransparency().setTransparentThreeValuePixelList(tr_list)
+
+            layer.renderer().setNodataColor(20)
             return
 
         red_band = renderer.redBand()
