@@ -204,9 +204,7 @@ class RasterSymbologyRenderer:
                 layer.renderer().setBlueContrastEnhancement(ce)
 
     def _refresh_min_max_multibandcolor(self, layer: QgsRasterLayer) -> None:
-        layer.dataProvider().setNoDataValue(red_band, 0)
-        layer.dataProvider().setNoDataValue(green_band, 0)
-        layer.dataProvider().setNoDataValue(blue_band, 0)
+
         renderer = layer.renderer()
         red_ce = QgsContrastEnhancement(renderer.redContrastEnhancement())
         green_ce = QgsContrastEnhancement(renderer.greenContrastEnhancement())
@@ -217,6 +215,10 @@ class RasterSymbologyRenderer:
         red_band = renderer.redBand()
         green_band = renderer.greenBand()
         blue_band = renderer.blueBand()
+        
+        layer.dataProvider().setNoDataValue(red_band, 0)
+        layer.dataProvider().setNoDataValue(green_band, 0)
+        layer.dataProvider().setNoDataValue(blue_band, 0)
         if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
             self.__debug("No min/max refresh needed")
             # layer.renderer().setNodataColor(Qt.GlobalColor(19))
