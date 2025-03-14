@@ -16,8 +16,9 @@ from qgis.core import (
     QgsSingleBandGrayRenderer,
     QgsSingleBandPseudoColorRenderer,
     QgsStyle,
+    QgsRasterTransparency,
 )
-
+from PyQt5.QtCore import Qt
 from ..utils import logger
 
 ContrastEnhancementAlgorithm = (
@@ -82,21 +83,24 @@ class RasterSymbologyRenderer:
         if "contrast_enhancement" in properties:
             self.__debug("Load contrast enhancement")
             self._load_contrast_enhancement(properties["contrast_enhancement"])
-        match self.type:
-            case RasterSymbologyRenderer.Type.MULTI_BAND_COLOR:
-                self.__debug("Load multibandcolor properties")
-                self._load_multibandcolor_properties(properties)
-            case RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY:
-                self.__debug("Load singlebandgray properties")
-                self._load_singlebandgray_properties(properties)
-            case RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR:
-                self.__debug("Load singlebandpseudocolor properties")
-                self._load_singlebandpseudocolor_properties(properties)
+            match self.type:
+                case RasterSymbologyRenderer.Type.MULTI_BAND_COLOR:
+                    self.__debug("Load multibandcolor properties")
+                    self._load_multibandcolor_properties(properties)
+                case RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY:
+                    self.__debug("Load singlebandgray properties")
+                    self._load_singlebandgray_properties(properties)
+                case RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR:
+                    self.__debug("Load singlebandpseudocolor properties")
+                    self._load_singlebandpseudocolor_properties(properties)
         return True, ""
 
     def process_renderering(self, raster: QgsRasterLayer, rendering: dict) -> None:
         """Apply rendering to the template raster"""
         # config rendering
+        if self.contrast_algorithm == ContrastEnhancementAlgorithm.NoEnhancement:
+            self.__debug("No rendering needed")
+            return
         mapping = {
             "gamma": lambda v: raster.brightnessFilter().setGamma(float(v)),
             "brightness": lambda v: raster.brightnessFilter().setBrightness(int(v)),
@@ -107,6 +111,21 @@ class RasterSymbologyRenderer:
             if key in rendering:
                 action(rendering[key])
 
+    def set_contrast_enhancement(self, raster: QgsRasterLayer) -> None:
+        match self.contrast_algorithm:
+            case ContrastEnhancementAlgorithm.StretchToMinimumMaximum:
+                self.__debug("Stretch to min/max")
+                raster.setContrastEnhancement(
+                    self.contrast_algorithm, self.contrast_limits)
+                match self.contrast_limits:
+                    case QgsRasterMinMaxOrigin.Limits.None_:
+                        self.set_user_defined_limits(raster)
+                    case QgsRasterMinMaxOrigin.Limits.CumulativeCut:
+                        self.set_cumulative_cut_limits(raster)
+            case ContrastEnhancementAlgorithm.NoEnhancement:
+                self.__debug("No enhancement")
+                raster.setContrastEnhancement(self.contrast_algorithm)
+
     def set_user_defined_limits(self, raster: QgsRasterLayer) -> None:
         """Set user defined limits to the template raster"""
         self.__debug("Set user defined limits")
@@ -115,7 +134,6 @@ class RasterSymbologyRenderer:
                 ce = QgsContrastEnhancement(
                     raster.renderer().contrastEnhancement())
                 self._set_min_max(raster, ce, self.Color.GRAY)
-
             case RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR:
                 return
             case RasterSymbologyRenderer.Type.MULTI_BAND_COLOR:
@@ -143,7 +161,8 @@ class RasterSymbologyRenderer:
         raster.renderer().setMinMaxOrigin(min_max_cut)
 
     def refresh_min_max(self, layer: QgsRasterLayer) -> None:
-        if (layer.renderer().minMaxOrigin().limits() == QgsRasterMinMaxOrigin.Limits.None_):
+        if layer.renderer().minMaxOrigin().limits() == QgsRasterMinMaxOrigin.Limits.None_:
+            self.__debug("No min/max refresh needed")
             return
         match self.type:
             case RasterSymbologyRenderer.Type.SINGLE_BAND_GRAY:
@@ -185,6 +204,9 @@ class RasterSymbologyRenderer:
                 layer.renderer().setBlueContrastEnhancement(ce)
 
     def _refresh_min_max_multibandcolor(self, layer: QgsRasterLayer) -> None:
+        layer.dataProvider().setNoDataValue(red_band, 0)
+        layer.dataProvider().setNoDataValue(green_band, 0)
+        layer.dataProvider().setNoDataValue(blue_band, 0)
         renderer = layer.renderer()
         red_ce = QgsContrastEnhancement(renderer.redContrastEnhancement())
         green_ce = QgsContrastEnhancement(renderer.greenContrastEnhancement())
@@ -192,12 +214,14 @@ class RasterSymbologyRenderer:
         alg = red_ce.contrastEnhancementAlgorithm()
         self.__debug(f"contrast enhancement algorithm: {alg}")
         self.__debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
-        if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
-            return
-
         red_band = renderer.redBand()
         green_band = renderer.greenBand()
         blue_band = renderer.blueBand()
+        if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
+            self.__debug("No min/max refresh needed")
+            # layer.renderer().setNodataColor(Qt.GlobalColor(19))
+            return
+        
         match renderer.minMaxOrigin().limits():
             case QgsRasterMinMaxOrigin.Limits.MinMax:
                 self.__debug("compute min/max for multibandcolor")
@@ -247,8 +271,9 @@ class RasterSymbologyRenderer:
         self.__debug(f"contrast enhancement algorithm: {alg}")
         self.__debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
         if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
+            self.__debug("No min/max refresh needed")
+            layer.setProperty("contrast_enhancement", "NoEnhancement")
             return
-
         match layer.renderer().minMaxOrigin().limits():
             case QgsRasterMinMaxOrigin.Limits.MinMax:
                 self.__debug("compute min/max for singlebandgray")
@@ -271,6 +296,7 @@ class RasterSymbologyRenderer:
 
     def _refresh_min_max_singlebandpseudocolor(self, layer: QgsRasterLayer) -> None:
         self.__debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
+        layer.dataProvider().setNoDataValue(1, 0)
         match layer.renderer().minMaxOrigin().limits():
             case QgsRasterMinMaxOrigin.Limits.MinMax:
                 self.__debug("compute min/max for singlebandpseudocolor")
@@ -284,7 +310,8 @@ class RasterSymbologyRenderer:
                 layer.renderer().setClassificationMax(stats.maximumValue)
                 layer.renderer().shader().rasterShaderFunction().classifyColorRamp()
             case QgsRasterMinMaxOrigin.Limits.CumulativeCut:
-                self.__debug("compute cumulative cut for singlebandpseudocolor")
+                self.__debug(
+                    "compute cumulative cut for singlebandpseudocolor")
                 min_max = self._compute_cumulative_cut(layer)
                 layer.renderer().setClassificationMin(min_max[0])
                 layer.renderer().setClassificationMax(min_max[1])
@@ -400,9 +427,9 @@ class RasterSymbologyRenderer:
                 self.contrast_limits = (
                     QgsRasterMinMaxOrigin.Limits.CumulativeCut)
                 self._load_cumulative_cut(properties)
-        self.__debug(f"contrast enhancement algorithm: {self.contrast_algorithm}")
+        self.__debug(
+            f"contrast enhancement algorithm: {self.contrast_algorithm}")
         self.__debug(f"limits: {self.contrast_limits}")
-        
 
     def _load_cumulative_cut(self, properties: dict) -> None:
         if "cumulative_cut_upper" in properties:

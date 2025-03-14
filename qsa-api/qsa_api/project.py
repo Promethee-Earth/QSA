@@ -282,10 +282,10 @@ class QSAProject:
             # refresh min/max for the current layer if necessary (because the style is built on an empty geotiff)
             if layer.type() == QgsMapLayer.RasterLayer:
                 self.debug("Refresh symbology renderer min/max")
-                self.debug(
-                    f"Refresh symbology renderer min/max done: {layer.renderer().minMaxOrigin().limits()}")
                 renderer = RasterSymbologyRenderer(layer.renderer().type())
                 renderer.refresh_min_max(layer)
+                self.debug(
+                    f"Refresh symbology renderer min/max done: {layer.renderer().minMaxOrigin().limits()}")
                 
         self.debug("Write project")
         project.write()
@@ -556,14 +556,11 @@ class QSAProject:
         # save style
         # contrast enhancement needs to be managed after setting renderer
         rl.setRenderer(renderer.renderer)
-        if renderer.contrast_algorithm:
-            rl.setContrastEnhancement(
-                renderer.contrast_algorithm, renderer.contrast_limits)
-            match renderer.contrast_limits:
-                case QgsRasterMinMaxOrigin.Limits.None_:
-                    renderer.set_user_defined_limits(rl)
-                case QgsRasterMinMaxOrigin.Limits.CumulativeCut:
-                    renderer.set_cumulative_cut_limits(rl)
+        self.debug(f"Contrast enhancement: {renderer.contrast_algorithm}")
+        if renderer.contrast_algorithm != None:
+            renderer.set_contrast_enhancement(rl)
+        else:
+            self.debug("No contrast algorithm defined")
         # save
         path = self._qgis_project_dir / f"{name}.qml"
         rl.saveNamedStyle(
