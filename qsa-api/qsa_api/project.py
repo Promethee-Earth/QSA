@@ -286,7 +286,14 @@ class QSAProject:
                 renderer.refresh_min_max(layer)
                 self.debug(
                     f"Refresh symbology renderer min/max done: {layer.renderer().minMaxOrigin().limits()}")
-                
+            ovr = RasterOverview(layer)
+            if not ovr.is_valid():
+                self.debug("Build overviews")
+                rc, err = ovr.build()
+                if not rc:
+                    return False, err
+            else:
+                self.debug("Overviews already exist")
         self.debug("Write project")
         project.write()
 
