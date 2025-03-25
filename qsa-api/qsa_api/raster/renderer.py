@@ -216,11 +216,11 @@ class RasterSymbologyRenderer:
         green_band = renderer.greenBand()
         blue_band = renderer.blueBand()
         
-        layer.dataProvider().setNoDataValue(red_band, 0)
-        layer.dataProvider().setNoDataValue(green_band, 0)
-        layer.dataProvider().setNoDataValue(blue_band, 0)
         if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
             self.__debug("No min/max refresh needed")
+            layer.dataProvider().setNoDataValue(red_band, 0)
+            layer.dataProvider().setNoDataValue(green_band, 0)
+            layer.dataProvider().setNoDataValue(blue_band, 0)
             # layer.renderer().setNodataColor(Qt.GlobalColor(19))
             return
         
@@ -298,7 +298,11 @@ class RasterSymbologyRenderer:
 
     def _refresh_min_max_singlebandpseudocolor(self, layer: QgsRasterLayer) -> None:
         self.__debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
-        layer.dataProvider().setNoDataValue(1, 0)
+        # layer.dataProvider().setNoDataValue(1, 0)
+        
+        ce = QgsContrastEnhancement(layer.renderer().contrastEnhancement())
+        self.__debug(f"contrast enhancement algorithm: {ce.contrastEnhancementAlgorithm()}")
+        
         match layer.renderer().minMaxOrigin().limits():
             case QgsRasterMinMaxOrigin.Limits.MinMax:
                 self.__debug("compute min/max for singlebandpseudocolor")
