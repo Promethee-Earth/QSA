@@ -335,10 +335,17 @@ class RasterSymbologyRenderer:
             layer.extent(),
             250000,
         )
-        self.__debug(
-            f"stats: min={stats.minimumValue}, max={stats.maximumValue}")
-        min_max = layer.dataProvider().cumulativeCut(
-            band, stats.minimumValue, stats.maximumValue, stats.minimumValue, stats.maximumValue, layer.extent(), 0)
+        min_percent = min_max_cut.cumulativeCutLower()
+        max_percent = min_max_cut.cumulativeCutUpper()
+        lo, hi = np.percentile(
+            layer.dataProvider().block(band, layer.extent(), 1), [min_percent, max_percent])
+        res_img = (layer.dataProvider().block(band, layer.extent(), 1) - lo) / (hi - lo)
+        res_img = np.maximum(0, np.minimum(1, res_img))
+        min_max = (np.min(res_img), np.max(res_img))
+        # self.__debug(
+        #     f"stats: min={stats.minimumValue}, max={stats.maximumValue}")
+        # min_max = layer.dataProvider().cumulativeCut(
+        #     band, stats.minimumValue, stats.maximumValue, stats.minimumValue, stats.maximumValue, layer.extent(), 0)
         self.__debug(
             f"computed cumulative cut: min={min_max[0]}, max={min_max[1]}")
         return min_max
