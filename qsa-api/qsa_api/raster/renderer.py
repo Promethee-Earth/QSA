@@ -4,6 +4,7 @@ import sys
 from enum import Enum
 from pathlib import Path
 
+import numpy as np
 from qgis.core import (
     QgsColorRampShader,
     QgsContrastEnhancement,
@@ -329,14 +330,15 @@ class RasterSymbologyRenderer:
     def _compute_cumulative_cut(self, layer: QgsRasterLayer, band: int = 1) -> (float | float):
         min_max_cut = layer.renderer().minMaxOrigin()
         stats = layer.dataProvider().bandStatistics(
-            1,
+            band,
             QgsRasterBandStats.Min | QgsRasterBandStats.Max,
             layer.extent(),
             250000,
         )
-        self.__debug(f"stats: min={stats.minimumValue}, max={stats.maximumValue}")
+        self.__debug(
+            f"stats: min={stats.minimumValue}, max={stats.maximumValue}")
         min_max = layer.dataProvider().cumulativeCut(
-            band, min_max_cut.cumulativeCutLower(), min_max_cut.cumulativeCutUpper(), layer.extent())
+            band, stats.minimumValue, stats.maximumValue, stats.minimumValue, stats.maximumValue, layer.extent(), 0)
         self.__debug(
             f"computed cumulative cut: min={min_max[0]}, max={min_max[1]}")
         return min_max
