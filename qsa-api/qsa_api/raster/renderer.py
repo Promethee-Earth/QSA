@@ -328,8 +328,9 @@ class RasterSymbologyRenderer:
     def _compute_cumulative_cut(self, layer: QgsRasterLayer, band: int = 1) -> (float | float):
         min_max_cut = layer.renderer().minMaxOrigin()
         self.__debug(f"base cumulative cut: min={min_max_cut.cumulativeCutLower()}, max={min_max_cut.cumulativeCutUpper()}")
+        self.__debug(f"min max origin limits: {min_max_cut.limits()}")
         min_max = layer.dataProvider().cumulativeCut(
-            band, min_max_cut.cumulativeCutLower(), min_max_cut.cumulativeCutUpper())
+            band, min_max_cut.cumulativeCutLower(), min_max_cut.cumulativeCutUpper(), layer.extent())
         self.__debug(f"computed cumulative cut: min={min_max[0]}, max={min_max[1]}")
         return min_max
 
