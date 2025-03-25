@@ -253,6 +253,7 @@ class RasterSymbologyRenderer:
                 blue_ce.setMaximumValue(blue_stats.maximumValue)
             case QgsRasterMinMaxOrigin.Limits.CumulativeCut:
                 self.__debug("compute cumulative cut for multibandcolor")
+                self.__debug(f"")
                 red_min_max = self._compute_cumulative_cut(layer, red_band)
                 red_ce.setMinimumValue(red_min_max[0])
                 red_ce.setMaximumValue(red_min_max[1])
@@ -319,14 +320,17 @@ class RasterSymbologyRenderer:
                 self.__debug(
                     "compute cumulative cut for singlebandpseudocolor")
                 min_max = self._compute_cumulative_cut(layer)
+                self.__debug(f"min_max: {min_max[0]} | {min_max[1]}")
                 layer.renderer().setClassificationMin(min_max[0])
                 layer.renderer().setClassificationMax(min_max[1])
                 layer.renderer().shader().rasterShaderFunction().classifyColorRamp()
 
     def _compute_cumulative_cut(self, layer: QgsRasterLayer, band: int = 1) -> (float | float):
         min_max_cut = layer.renderer().minMaxOrigin()
+        self.__debug(f"base cumulative cut: min={min_max_cut.cumulativeCutLower()}, max={min_max_cut.cumulativeCutUpper()}")
         min_max = layer.dataProvider().cumulativeCut(
             band, min_max_cut.cumulativeCutLower(), min_max_cut.cumulativeCutUpper())
+        self.__debug(f"computed cumulative cut: min={min_max[0]}, max={min_max[1]}")
         return min_max
 
     def _load_multibandcolor_properties(self, properties: dict) -> None:
