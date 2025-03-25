@@ -215,7 +215,7 @@ class RasterSymbologyRenderer:
         red_band = renderer.redBand()
         green_band = renderer.greenBand()
         blue_band = renderer.blueBand()
-        
+
         if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
             self.__debug("No min/max refresh needed")
             layer.dataProvider().setNoDataValue(red_band, 0)
@@ -223,7 +223,7 @@ class RasterSymbologyRenderer:
             layer.dataProvider().setNoDataValue(blue_band, 0)
             # layer.renderer().setNodataColor(Qt.GlobalColor(19))
             return
-        
+
         match renderer.minMaxOrigin().limits():
             case QgsRasterMinMaxOrigin.Limits.MinMax:
                 self.__debug("compute min/max for multibandcolor")
@@ -300,10 +300,11 @@ class RasterSymbologyRenderer:
     def _refresh_min_max_singlebandpseudocolor(self, layer: QgsRasterLayer) -> None:
         self.__debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
         # layer.dataProvider().setNoDataValue(1, 0)
-        
+
         ce = QgsContrastEnhancement(layer.renderer().contrastEnhancement())
-        self.__debug(f"contrast enhancement algorithm: {ce.contrastEnhancementAlgorithm()}")
-        
+        self.__debug(
+            f"contrast enhancement algorithm: {ce.contrastEnhancementAlgorithm()}")
+
         match layer.renderer().minMaxOrigin().limits():
             case QgsRasterMinMaxOrigin.Limits.MinMax:
                 self.__debug("compute min/max for singlebandpseudocolor")
@@ -327,11 +328,17 @@ class RasterSymbologyRenderer:
 
     def _compute_cumulative_cut(self, layer: QgsRasterLayer, band: int = 1) -> (float | float):
         min_max_cut = layer.renderer().minMaxOrigin()
-        self.__debug(f"base cumulative cut: min={min_max_cut.cumulativeCutLower()}, max={min_max_cut.cumulativeCutUpper()}")
-        self.__debug(f"min max origin limits: {min_max_cut.limits()}")
+        stats = layer.dataProvider().bandStatistics(
+            1,
+            QgsRasterBandStats.Min | QgsRasterBandStats.Max,
+            layer.extent(),
+            250000,
+        )
+        self.__debug(f"stats: min={stats.minimumValue}, max={stats.maximumValue}")
         min_max = layer.dataProvider().cumulativeCut(
             band, min_max_cut.cumulativeCutLower(), min_max_cut.cumulativeCutUpper(), layer.extent())
-        self.__debug(f"computed cumulative cut: min={min_max[0]}, max={min_max[1]}")
+        self.__debug(
+            f"computed cumulative cut: min={min_max[0]}, max={min_max[1]}")
         return min_max
 
     def _load_multibandcolor_properties(self, properties: dict) -> None:
