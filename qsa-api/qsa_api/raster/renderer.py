@@ -330,7 +330,7 @@ class RasterSymbologyRenderer:
         min_max_cut = layer.renderer().minMaxOrigin()
         values = layer.dataProvider().bandStatistics(
             band,
-            QgsRasterBandStats.Maximum,
+            QgsRasterBandStats.Min | QgsRasterBandStats.Max,
             layer.extent(),
             250000,
         )
