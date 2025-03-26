@@ -327,7 +327,7 @@ class RasterSymbologyRenderer:
                 layer.renderer().shader().rasterShaderFunction().classifyColorRamp()
 
     def _compute_cumulative_cut(self, layer: QgsRasterLayer, band: int = 1) -> (float | float):
-        min_max_cut = layer.renderer().minMaxOrigin()
+        min_max_origin = layer.renderer().minMaxOrigin()
         values = layer.dataProvider().bandStatistics(
             band,
             QgsRasterBandStats.Min | QgsRasterBandStats.Max,
@@ -335,9 +335,12 @@ class RasterSymbologyRenderer:
             250000,
         )
         
-        cut_min_max = layer.dataProvider().cumulativeCut(band, min_max_cut.CUMULATIVE_CUT_LOWER, min_max_cut.CUMULATIVE_CUT_UPPER, layer.extent())
+        cut_min = min_max_origin.cumulativeCutLower()
+        cut_max = min_max_origin.cumulativeCutUpper()
         
-        self.__debug(f"min: {values.minimumValue}, max: {values.maximumValue}, cut_min: {min_max_cut.CUMULATIVE_CUT_LOWER}, cut_max: {min_max_cut.CUMULATIVE_CUT_UPPER}")
+        cut_min_max = layer.dataProvider().cumulativeCut(band, cut_min, cut_max, layer.extent())
+        
+        self.__debug(f"min: {values.minimumValue}, max: {values.maximumValue}, cut_min: {cut_min}, cut_max: {cut_max}")
         self.__debug(f"cumulative cut min: {cut_min_max[0]}, cumulative cut max: {cut_min_max[1]}")
 
         return cut_min_max
