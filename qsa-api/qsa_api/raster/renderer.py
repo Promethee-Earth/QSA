@@ -302,7 +302,7 @@ class RasterSymbologyRenderer:
         self.__debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
         # layer.dataProvider().setNoDataValue(1, 0)
 
-        ce = QgsContrastEnhancement(layer.renderer().contrastEnhancement())
+        ce = layer.renderer().contrastEnhancement()
         self.__debug(
             f"contrast enhancement algorithm: {ce.contrastEnhancementAlgorithm()}")
 
