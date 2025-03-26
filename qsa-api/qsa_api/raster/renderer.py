@@ -205,7 +205,6 @@ class RasterSymbologyRenderer:
                 layer.renderer().setBlueContrastEnhancement(ce)
 
     def _refresh_min_max_multibandcolor(self, layer: QgsRasterLayer) -> None:
-
         renderer = layer.renderer()
         red_ce = QgsContrastEnhancement(renderer.redContrastEnhancement())
         green_ce = QgsContrastEnhancement(renderer.greenContrastEnhancement())
@@ -300,11 +299,7 @@ class RasterSymbologyRenderer:
 
     def _refresh_min_max_singlebandpseudocolor(self, layer: QgsRasterLayer) -> None:
         self.__debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
-        # layer.dataProvider().setNoDataValue(1, 0)
-
-        ce = layer.renderer().contrastEnhancement()
-        self.__debug(
-            f"contrast enhancement algorithm: {ce.contrastEnhancementAlgorithm()}")
+        layer.dataProvider().setNoDataValue(1, 0)
 
         match layer.renderer().minMaxOrigin().limits():
             case QgsRasterMinMaxOrigin.Limits.MinMax:
