@@ -340,8 +340,6 @@ class RasterSymbologyRenderer:
         cut_min = min_value + (max_value - min_value) * min_max_cut.cumulativeCutLower()
         cut_max = max_value - (max_value - min_value) * min_max_cut.cumulativeCutUpper()
         
-        layer.dataProvider().setNoDataValue(band, 0)
-        layer.renderer().setNodataColor(Qt.GlobalColor(19))
         cut_min_max = layer.dataProvider().cumulativeCut(band, cut_min, cut_max)
         
         self.__debug(f"min: {min_value}, max: {max_value}, cut_min: {cut_min}, cut_max: {cut_max}")
