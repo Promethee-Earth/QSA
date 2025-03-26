@@ -334,8 +334,8 @@ class RasterSymbologyRenderer:
             layer.extent(),
             250000,
         )
-        min_value = stats.minimumValue()
-        max_value = stats.maximumValue()
+        min_value = stats.minimumValue
+        max_value = stats.maximumValue
         
         cut_min = min_value + (max_value - min_value) * min_max_cut.cumulativeCutLower()
         cut_max = max_value - (max_value - min_value) * min_max_cut.cumulativeCutUpper()
