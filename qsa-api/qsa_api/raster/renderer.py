@@ -322,7 +322,6 @@ class RasterSymbologyRenderer:
                 self.__debug(
                     "compute cumulative cut for singlebandpseudocolor")
                 min_max = self._compute_cumulative_cut(layer)
-                self.__debug(f"min_max: {min_max[0]} | {min_max[1]}")
                 layer.renderer().setClassificationMin(min_max[0])
                 layer.renderer().setClassificationMax(min_max[1])
                 layer.renderer().shader().rasterShaderFunction().classifyColorRamp()
@@ -335,20 +334,15 @@ class RasterSymbologyRenderer:
             layer.extent(),
             250000,
         )
-        min_percent = min_max_cut.cumulativeCutLower()
-        max_percent = min_max_cut.cumulativeCutUpper()
-        lo, hi = np.percentile(
-            layer.dataProvider().block(band, layer.extent(), 1), [min_percent, max_percent])
-        res_img = (layer.dataProvider().block(band, layer.extent(), 1) - lo) / (hi - lo)
-        res_img = np.maximum(0, np.minimum(1, res_img))
-        min_max = (np.min(res_img), np.max(res_img))
-        # self.__debug(
-        #     f"stats: min={stats.minimumValue}, max={stats.maximumValue}")
-        # min_max = layer.dataProvider().cumulativeCut(
-        #     band, stats.minimumValue, stats.maximumValue, stats.minimumValue, stats.maximumValue, layer.extent(), 0)
-        self.__debug(
-            f"computed cumulative cut: min={min_max[0]}, max={min_max[1]}")
-        return min_max
+        min_value = stats.minimumValue()
+        max_value = stats.maximumValue()
+        
+        cut_min = min_value + (max_value - min_value) * min_max_cut.cumulativeCutLower()
+        cut_max = max_value - (max_value - min_value) * min_max_cut.cumulativeCutUpper()
+        
+        self.__debug(f"min: {min_value}, max: {max_value}, cut_min: {cut_min}, cut_max: {cut_max}")
+
+        return cut_min, cut_max
 
     def _load_multibandcolor_properties(self, properties: dict) -> None:
         if "red" in properties:
