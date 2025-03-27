@@ -16,9 +16,7 @@ from qgis.core import (
     QgsSingleBandGrayRenderer,
     QgsSingleBandPseudoColorRenderer,
     QgsStyle,
-    QgsRasterTransparency,
 )
-from PyQt5.QtCore import Qt
 from ..utils import logger
 
 ContrastEnhancementAlgorithm = (
@@ -204,7 +202,6 @@ class RasterSymbologyRenderer:
                 layer.renderer().setBlueContrastEnhancement(ce)
 
     def _refresh_min_max_multibandcolor(self, layer: QgsRasterLayer) -> None:
-
         renderer = layer.renderer()
         red_ce = QgsContrastEnhancement(renderer.redContrastEnhancement())
         green_ce = QgsContrastEnhancement(renderer.greenContrastEnhancement())
@@ -215,15 +212,15 @@ class RasterSymbologyRenderer:
         red_band = renderer.redBand()
         green_band = renderer.greenBand()
         blue_band = renderer.blueBand()
-        
-        layer.dataProvider().setNoDataValue(red_band, 0)
-        layer.dataProvider().setNoDataValue(green_band, 0)
-        layer.dataProvider().setNoDataValue(blue_band, 0)
+
         if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
             self.__debug("No min/max refresh needed")
+            layer.dataProvider().setNoDataValue(red_band, 0)
+            layer.dataProvider().setNoDataValue(green_band, 0)
+            layer.dataProvider().setNoDataValue(blue_band, 0)
             # layer.renderer().setNodataColor(Qt.GlobalColor(19))
             return
-        
+
         match renderer.minMaxOrigin().limits():
             case QgsRasterMinMaxOrigin.Limits.MinMax:
                 self.__debug("compute min/max for multibandcolor")
@@ -253,6 +250,7 @@ class RasterSymbologyRenderer:
                 blue_ce.setMaximumValue(blue_stats.maximumValue)
             case QgsRasterMinMaxOrigin.Limits.CumulativeCut:
                 self.__debug("compute cumulative cut for multibandcolor")
+                self.__debug(f"")
                 red_min_max = self._compute_cumulative_cut(layer, red_band)
                 red_ce.setMinimumValue(red_min_max[0])
                 red_ce.setMaximumValue(red_min_max[1])
@@ -299,6 +297,7 @@ class RasterSymbologyRenderer:
     def _refresh_min_max_singlebandpseudocolor(self, layer: QgsRasterLayer) -> None:
         self.__debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
         layer.dataProvider().setNoDataValue(1, 0)
+
         match layer.renderer().minMaxOrigin().limits():
             case QgsRasterMinMaxOrigin.Limits.MinMax:
                 self.__debug("compute min/max for singlebandpseudocolor")
@@ -320,10 +319,23 @@ class RasterSymbologyRenderer:
                 layer.renderer().shader().rasterShaderFunction().classifyColorRamp()
 
     def _compute_cumulative_cut(self, layer: QgsRasterLayer, band: int = 1) -> (float | float):
-        min_max_cut = layer.renderer().minMaxOrigin()
-        min_max = layer.dataProvider().cumulativeCut(
-            band, min_max_cut.cumulativeCutLower(), min_max_cut.cumulativeCutUpper())
-        return min_max
+        min_max_origin = layer.renderer().minMaxOrigin()
+        values = layer.dataProvider().bandStatistics(
+            band,
+            QgsRasterBandStats.Min | QgsRasterBandStats.Max,
+            layer.extent(),
+            250000,
+        )
+        
+        cut_min = min_max_origin.cumulativeCutLower()
+        cut_max = min_max_origin.cumulativeCutUpper()
+        
+        cut_min_max = layer.dataProvider().cumulativeCut(band, cut_min, cut_max, layer.extent())
+        
+        self.__debug(f"min: {values.minimumValue}, max: {values.maximumValue}, cut_min: {cut_min}, cut_max: {cut_max}")
+        self.__debug(f"cumulative cut min: {cut_min_max[0]}, cumulative cut max: {cut_min_max[1]}")
+
+        return cut_min_max
 
     def _load_multibandcolor_properties(self, properties: dict) -> None:
         if "red" in properties:
@@ -436,11 +448,11 @@ class RasterSymbologyRenderer:
     def _load_cumulative_cut(self, properties: dict) -> None:
         if "cumulative_cut_upper" in properties:
             self.cumulative_cut_upper = float(
-                properties["cumulative_cut_upper"] / 100)
+                (100 - properties["cumulative_cut_upper"] )/ 100)
             self.__debug(f"cumulative cut upper: {self.cumulative_cut_upper}")
         if "cumulative_cut_lower" in properties:
             self.cumulative_cut_lower = float(
-                properties["cumulative_cut_lower"] / 100)
+                (0 + properties["cumulative_cut_lower"]) / 100)
             self.__debug(f"cumulative cut lower: {self.cumulative_cut_lower}")
 
     def __debug(self, msg: str) -> None:
