@@ -57,17 +57,6 @@ class QSAConfig:
     @property
     def qgisserver_projects_psql_port(self) -> str:
         return os.environ.get("QSA_QGISSERVER_PROJECTS_PSQL_PORT", "")
-    @property
-    def mapproxy_projects_dir(self) -> str:
-        return os.environ.get("QSA_MAPPROXY_PROJECTS_DIR", "").replace('"', "")
-
-    @property
-    def mapproxy_cache_s3_bucket(self) -> str:
-        return os.environ.get("QSA_MAPPROXY_CACHE_S3_BUCKET", "")
-
-    @property
-    def mapproxy_cache_s3_dir(self) -> str:
-        return os.environ.get("QSA_MAPPROXY_CACHE_S3_DIR", "/mapproxy/cache")
 
     @property
     def aws_access_key_id(self) -> str:

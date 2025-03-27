@@ -32,7 +32,6 @@ from qgis.core import (
 from qgis.PyQt.QtCore import QDateTime, Qt
 from qgis.PyQt.QtGui import QColor
 
-from .mapproxy import QSAMapProxy
 from .raster import RasterOverview, RasterSymbologyRenderer
 from .utils import StorageBackend, config, logger
 from .vector import VectorSymbologyRenderer
@@ -142,42 +141,9 @@ class QSAProject:
             m["schema"] = self.schema
 
         m["cache"] = "disabled"
-        if self._mapproxy_enabled:
-            m["cache"] = "mapproxy"
-
+        
         return m
-
-    def cache_metadata(self) -> (dict | str):
-        if self._mapproxy_enabled:
-            return QSAMapProxy(self.name).metadata(), ""
-        return {}, "Cache is disabled"
-
-    def cache_reset(self) -> (bool | str):
-        if self._mapproxy_enabled:
-            mp = QSAMapProxy(self.name)
-            rc, err = mp.read()
-            if not rc:
-                return False, err
-
-            p = QgsProject()
-            p.read(self._qgis_project_uri)
-
-            for layer in p.mapLayers().values():
-                t = layer.type()
-                bbox = QSAProject._layer_bbox(layer)
-                epsg_code = QSAProject._layer_epsg_code(layer)
-
-                mp.remove_layer(layer.name())
-                mp.add_layer(
-                    layer.name(), bbox, epsg_code, t == Qgis.LayerType.Raster, None
-                )
-
-                mp.write()
-
-            return True, ""
-
-        return False, "Cache is disabled"
-
+    
     def style_default(self, geometry: str) -> bool:
         con = sqlite3.connect(self.sqlite_db.as_posix())
         cur = con.cursor()
@@ -253,12 +219,6 @@ class QSAProject:
         # if style_name != "default" and style_name not in self.styles:
         #     return False, f"Style '{style_name}' does not exist"
 
-        self.debug("Start for clearing MapProxy cache")
-        mp = QSAMapProxy(self.name)
-        mp.clear_cache(layer_name)
-
-        self.debug("clear_cache is finish")
-
         project = QgsProject()
         project.read(self._qgis_project_uri)
 
@@ -307,17 +267,6 @@ class QSAProject:
         project.removeMapLayers(ids)
 
         rc = project.write()
-
-        # remove layer in mapproxy config
-        if self._mapproxy_enabled:
-            mp = QSAMapProxy(self.name)
-            rc, err = mp.read()
-            if not rc:
-                self.debug(err)
-                return False
-
-            mp.remove_layer(name)
-            mp.write()
 
         return rc
 
@@ -369,11 +318,6 @@ class QSAProject:
 
         rc = project.write(self._qgis_project_uri)
         self.debug(f"Create Project ok : {rc}")
-        # create mapproxy config file
-        if self._mapproxy_enabled:
-            self.debug("Write MapProxy configuration file")
-            mp = QSAMapProxy(self.name)
-            mp.create()
 
         # init sqlite database
         self.sqlite_db
@@ -384,11 +328,6 @@ class QSAProject:
         # clear cache and stuff
         for layer in self.layers:
             self.remove_layer(layer)
-
-        # remove mapproxy config file
-        if self._mapproxy_enabled:
-            mp = QSAMapProxy(self.name)
-            mp.remove()
 
         # remove qsa projects dir
         shutil.rmtree(self._qgis_project_dir, ignore_errors=True)
@@ -498,30 +437,6 @@ class QSAProject:
             default_style = self.style_default(geometry)
 
             self.layer_update_style(name, default_style, True)
-
-        # add layer in mapproxy config file
-        if self._mapproxy_enabled:
-            self.debug("Update MapProxy configuration file")
-
-            bbox = QSAProject._layer_bbox(lyr)
-            epsg_code = QSAProject._layer_epsg_code(lyr)
-            if epsg_code < 0:
-                return False, f"Invalid CRS {lyr.crs().authid()}"
-
-            self.debug(f"EPSG code {epsg_code}")
-
-            mp = QSAMapProxy(self.name)
-            rc, err = mp.read()
-            if not rc:
-                return False, err
-
-            rc, err = mp.add_layer(
-                name, bbox, epsg_code, t == Qgis.LayerType.Raster, datetime
-            )
-            if not rc:
-                return False, err
-
-            mp.write()
 
         return True, ""
 
@@ -813,10 +728,6 @@ class QSAProject:
         elif layer_type.lower() == "raster":
             return Qgis.LayerType.Raster
         return None
-
-    @property
-    def _mapproxy_enabled(self) -> bool:
-        return bool(config().mapproxy_projects_dir)
 
     @property
     def _qgis_project_dir(self) -> Path:

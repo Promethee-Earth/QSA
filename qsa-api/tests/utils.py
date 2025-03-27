@@ -55,7 +55,6 @@ class TestClient:
             shutil.rmtree(tmpdir, ignore_errors=True)
 
             (tmpdir / "qgis").mkdir(parents=True, exist_ok=True)
-            (tmpdir / "mapproxy").mkdir(parents=True, exist_ok=True)
         else:
             host = os.environ["QSA_HOST"]
             port = os.environ["QSA_PORT"]
