@@ -4,7 +4,6 @@ import sys
 from enum import Enum
 from pathlib import Path
 
-import numpy as np
 from qgis.core import (
     QgsColorRampShader,
     QgsContrastEnhancement,
@@ -17,9 +16,7 @@ from qgis.core import (
     QgsSingleBandGrayRenderer,
     QgsSingleBandPseudoColorRenderer,
     QgsStyle,
-    QgsRasterTransparency,
 )
-from PyQt5.QtCore import Qt
 from ..utils import logger
 
 ContrastEnhancementAlgorithm = (
