@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 from enum import Enum
 
+from qgis.core import QgsRasterBandStats
 
 class RasterType(Enum):
     NONE = 0

@@ -24,6 +24,33 @@ ContrastEnhancementAlgorithm = (
     QgsContrastEnhancement.ContrastEnhancementAlgorithm)
 
 
+class RasterMultiBandStats:
+    red_band: QgsRasterBandStats
+    green_band: QgsRasterBandStats
+    blue_band: QgsRasterBandStats
+
+    def __init__(self, layer: QgsRasterLayer):
+        renderer = layer.renderer()
+        self.red_band = layer.dataProvider().bandStatistics(
+            renderer.redBand(),
+            QgsRasterBandStats.Min | QgsRasterBandStats.Max,
+            layer.extent(),
+            250000,
+        )
+        self.green_band = layer.dataProvider().bandStatistics(
+            renderer.greenBand(),
+            QgsRasterBandStats.Min | QgsRasterBandStats.Max,
+            layer.extent(),
+            250000,
+        )
+        self.blue_band = layer.dataProvider().bandStatistics(
+            renderer.blueBand(),
+            QgsRasterBandStats.Min | QgsRasterBandStats.Max,
+            layer.extent(),
+            250000,
+        )
+
+
 class RasterSymbologyRenderer:
     class Color(Enum):
         GRAY = 0
@@ -215,7 +242,7 @@ class RasterSymbologyRenderer:
         red_band = renderer.redBand()
         green_band = renderer.greenBand()
         blue_band = renderer.blueBand()
-        
+
         result = MultiBand()
 
         if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
@@ -223,64 +250,60 @@ class RasterSymbologyRenderer:
             layer.dataProvider().setNoDataValue(red_band, 0)
             layer.dataProvider().setNoDataValue(green_band, 0)
             layer.dataProvider().setNoDataValue(blue_band, 0)
-            # layer.renderer().setNodataColor(Qt.GlobalColor(19))
-            return None
+
+            stats = RasterMultiBandStats(layer)
+            result.set_red_band(stats.red_band.minimumValue,
+                                stats.red_band.maximumValue)
+            result.set_green_band(stats.green_band.minimumValue,
+                                  stats.green_band.maximumValue)
+            result.set_blue_band(stats.blue_band.minimumValue,
+                                 stats.blue_band.maximumValue)
+            return result
 
         match renderer.minMaxOrigin().limits():
             case QgsRasterMinMaxOrigin.Limits.MinMax:
                 self.__debug("compute min/max for multibandcolor")
-                red_stats = layer.dataProvider().bandStatistics(
-                    red_band,
-                    QgsRasterBandStats.Min | QgsRasterBandStats.Max,
-                    layer.extent(),
-                    250000,
-                )
-                red_ce.setMinimumValue(red_stats.minimumValue)
-                red_ce.setMaximumValue(red_stats.maximumValue)
-                result.set_red_band(red_stats.minimumValue, red_stats.maximumValue)
-                
-                green_stats = layer.dataProvider().bandStatistics(
-                    green_band,
-                    QgsRasterBandStats.Min | QgsRasterBandStats.Max,
-                    layer.extent(),
-                    250000,
-                )
-                green_ce.setMinimumValue(green_stats.minimumValue)
-                green_ce.setMaximumValue(green_stats.maximumValue)
-                result.set_green_band(green_stats.minimumValue, green_stats.maximumValue)
-                
-                blue_stats = layer.dataProvider().bandStatistics(
-                    blue_band,
-                    QgsRasterBandStats.Min | QgsRasterBandStats.Max,
-                    layer.extent(),
-                    250000,
-                )
-                blue_ce.setMinimumValue(blue_stats.minimumValue)
-                blue_ce.setMaximumValue(blue_stats.maximumValue)
-                result.set_blue_band(blue_stats.minimumValue, blue_stats.maximumValue)
+
+                stats = RasterMultiBandStats(layer)
+
+                red_ce.setMinimumValue(stats.red_band.minimumValue)
+                red_ce.setMaximumValue(stats.red_band.maximumValue)
+                result.set_red_band(stats.red_band.minimumValue,
+                                    stats.red_band.maximumValue)
+
+                green_ce.setMinimumValue(stats.green_band.minimumValue)
+                green_ce.setMaximumValue(stats.green_band.maximumValue)
+                result.set_green_band(
+                    stats.green_band.minimumValue, stats.green_band.maximumValue)
+
+                blue_ce.setMinimumValue(stats.blue_band.minimumValue)
+                blue_ce.setMaximumValue(stats.blue_band.maximumValue)
+                result.set_blue_band(
+                    stats.blue_band.minimumValue, stats.blue_band.maximumValue)
+
             case QgsRasterMinMaxOrigin.Limits.CumulativeCut:
                 self.__debug("compute cumulative cut for multibandcolor")
                 self.__debug(f"")
-                
+
                 red_min_max = self._compute_cumulative_cut(layer, red_band)
                 red_ce.setMinimumValue(red_min_max[0])
                 red_ce.setMaximumValue(red_min_max[1])
                 result.set_red_band(red_min_max[0], red_min_max[1])
-                
+
                 green_min_max = self._compute_cumulative_cut(layer, green_band)
                 green_ce.setMinimumValue(green_min_max[0])
                 green_ce.setMaximumValue(green_min_max[1])
                 result.set_green_band(green_min_max[0], green_min_max[1])
-                
+
                 blue_min_max = self._compute_cumulative_cut(layer, blue_band)
                 blue_ce.setMinimumValue(blue_min_max[0])
                 blue_ce.setMaximumValue(blue_min_max[1])
-                result.set_blue_band(blue_min_max[0],blue_min_max[1])
+                result.set_blue_band(blue_min_max[0], blue_min_max[1])
 
         layer.renderer().setRedContrastEnhancement(red_ce)
         layer.renderer().setGreenContrastEnhancement(green_ce)
         layer.renderer().setBlueContrastEnhancement(blue_ce)
-        
+
         return result
 
     def _refresh_min_max_singlebandgray(self, layer: QgsRasterLayer) -> MinMax:
@@ -288,13 +311,20 @@ class RasterSymbologyRenderer:
         alg = ce.contrastEnhancementAlgorithm()
         self.__debug(f"contrast enhancement algorithm: {alg}")
         self.__debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
-        
+
         result = SignleBand()
         if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
             self.__debug("No min/max refresh needed")
             layer.setProperty("contrast_enhancement", "NoEnhancement")
-            return None
-        
+            stats = layer.dataProvider().bandStatistics(
+                1,
+                QgsRasterBandStats.Min | QgsRasterBandStats.Max,
+                layer.extent(),
+                250000,
+            )
+            result.set_band(stats.minimumValue, stats.maximumValue)
+            return result
+
         match layer.renderer().minMaxOrigin().limits():
             case QgsRasterMinMaxOrigin.Limits.MinMax:
                 self.__debug("compute min/max for singlebandgray")
