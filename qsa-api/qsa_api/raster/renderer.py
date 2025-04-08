@@ -160,7 +160,7 @@ class RasterSymbologyRenderer:
         raster.renderer().setMinMaxOrigin(min_max_cut)
 
     def refresh_min_max(self, layer: QgsRasterLayer) -> MinMax:
-        min_max = MinMax(RasterType.NONE)
+        min_max = None
         if layer.renderer().minMaxOrigin().limits() == QgsRasterMinMaxOrigin.Limits.None_:
             self.__debug("No min/max refresh needed")
             return min_max
@@ -224,7 +224,7 @@ class RasterSymbologyRenderer:
             layer.dataProvider().setNoDataValue(green_band, 0)
             layer.dataProvider().setNoDataValue(blue_band, 0)
             # layer.renderer().setNodataColor(Qt.GlobalColor(19))
-            return MinMax(RasterType.NONE)
+            return None
 
         match renderer.minMaxOrigin().limits():
             case QgsRasterMinMaxOrigin.Limits.MinMax:
@@ -293,7 +293,7 @@ class RasterSymbologyRenderer:
         if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
             self.__debug("No min/max refresh needed")
             layer.setProperty("contrast_enhancement", "NoEnhancement")
-            return MinMax(RasterType.NONE)
+            return None
         
         match layer.renderer().minMaxOrigin().limits():
             case QgsRasterMinMaxOrigin.Limits.MinMax:
