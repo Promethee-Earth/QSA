@@ -36,6 +36,7 @@ from .mapproxy import QSAMapProxy
 from .raster import RasterOverview, RasterSymbologyRenderer
 from .utils import StorageBackend, config, logger
 from .vector import VectorSymbologyRenderer
+from .raster.min_max import MinMax
 
 RENDERER_TAG_NAME = "renderer-v2"  # constant from core/symbology/renderer.h
 
@@ -283,9 +284,13 @@ class QSAProject:
             if layer.type() == QgsMapLayer.RasterLayer:
                 self.debug("Refresh symbology renderer min/max")
                 renderer = RasterSymbologyRenderer(layer.renderer().type())
-                renderer.refresh_min_max(layer)
+                min_max = renderer.refresh_min_max(layer)
                 self.debug(
                     f"Refresh symbology renderer min/max done: {layer.renderer().minMaxOrigin().limits()}")
+                self.debug("Write project")
+                project.write()
+                self.debug(min_max.serialize())
+                return True, min_max.serialize()
                 
         self.debug("Write project")
         project.write()
