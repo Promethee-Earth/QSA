@@ -349,17 +349,19 @@ class RasterSymbologyRenderer:
     def _refresh_min_max_singlebandpseudocolor(self, layer: QgsRasterLayer) -> MinMax:
         self.__debug(f"limits: {layer.renderer().minMaxOrigin().limits()}")
         layer.dataProvider().setNoDataValue(1, 0)
+        stats = layer.dataProvider().bandStatistics(
+            1,
+            QgsRasterBandStats.Min | QgsRasterBandStats.Max,
+            layer.extent(),
+            250000,
+        )
 
         result = SignleBand()
+        result.set_band(stats.minimumValue, stats.maximumValue)
+        
         match layer.renderer().minMaxOrigin().limits():
             case QgsRasterMinMaxOrigin.Limits.MinMax:
                 self.__debug("compute min/max for singlebandpseudocolor")
-                stats = layer.dataProvider().bandStatistics(
-                    1,
-                    QgsRasterBandStats.Min | QgsRasterBandStats.Max,
-                    layer.extent(),
-                    250000,
-                )
                 layer.renderer().setClassificationMin(stats.minimumValue)
                 layer.renderer().setClassificationMax(stats.maximumValue)
                 layer.renderer().shader().rasterShaderFunction().classifyColorRamp()
