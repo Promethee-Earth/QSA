@@ -342,7 +342,7 @@ class RasterSymbologyRenderer:
                 layer.renderer().setClassificationMax(min_max[1])
                 layer.renderer().shader().rasterShaderFunction().classifyColorRamp()
                 result.set_band(min_max[0], min_max[1])
-        return min_max
+        return result
 
     def _compute_cumulative_cut(self, layer: QgsRasterLayer, band: int = 1) -> (float | float):
         min_max_origin = layer.renderer().minMaxOrigin()
