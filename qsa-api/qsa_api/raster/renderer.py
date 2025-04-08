@@ -365,7 +365,7 @@ class RasterSymbologyRenderer:
                 layer.renderer().setClassificationMin(stats.minimumValue)
                 layer.renderer().setClassificationMax(stats.maximumValue)
                 layer.renderer().shader().rasterShaderFunction().classifyColorRamp()
-                result.set_band(stats.minimumValue)
+                result.set_band(stats.minimumValue, stats.maximumValue)
             case QgsRasterMinMaxOrigin.Limits.CumulativeCut:
                 self.__debug(
                     "compute cumulative cut for singlebandpseudocolor")
