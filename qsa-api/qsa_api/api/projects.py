@@ -188,7 +188,7 @@ def project_layer_update_style(name, layer_name):
             )
             if not rc:
                 return {"error": msg}, 415
-            return jsonify(True), 201
+            return jsonify(msg), 201
         else:
             return {"error": "Project does not exist"}, 415
     except Exception as e:
