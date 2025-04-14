@@ -298,6 +298,10 @@ class RasterSymbologyRenderer:
                 self.__debug("No min/max refresh needed")
                 return result
 
+            case QgsRasterMinMaxOrigin.Limits.None_:
+                self.__debug("No min/max refresh needed")
+                return result
+
         layer.renderer().setRedContrastEnhancement(red_ce)
         layer.renderer().setGreenContrastEnhancement(green_ce)
         layer.renderer().setBlueContrastEnhancement(blue_ce)
@@ -353,10 +357,9 @@ class RasterSymbologyRenderer:
             layer.extent(),
             250000,
         )
-
         result = SignleBand()
         result.set_band(stats.minimumValue, stats.maximumValue)
-        
+
         match limits:
             case QgsRasterMinMaxOrigin.Limits.MinMax:
                 self.__debug("compute min/max for singlebandpseudocolor")
