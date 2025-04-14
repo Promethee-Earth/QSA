@@ -1,6 +1,6 @@
 # coding: utf8
 from multiprocessing import Manager, Process
-from qgis.core import QgsProject, QgsRectangle
+from qgis.core import QgsProject, QgsRectangle, QgsRasterDataProvider
 
 class Histogram:
     def __init__(self, project_uri: str, layer: str) -> None:
@@ -28,22 +28,41 @@ class Histogram:
 
     @staticmethod
     def _process(
-        project_uri: str, layer: str, mini, maxi, count, out: dict
+        project_uri: str, layerName: str, mini, maxi, count, out: dict
     ) -> None:
 
         project = QgsProject.instance()
         project.read(project_uri)
-        lyr = project.mapLayersByName(layer)[0]
-
+        layer = project.mapLayersByName(layerName)[0]
+        data_provider = QgsRasterDataProvider(layer.dataProvider())
+        
+        if not data_provider.isValid():
+            out["histo"] = {}
+            return
+        
         histo = {}
-        for band in range(lyr.bandCount()):
-            h = lyr.dataProvider().histogram(
-                band + 1, count, mini, maxi, QgsRectangle(), 250000
-            )
+        for band in range(layer.bandCount()):
+           
+            hist = data_provider.histogram(
+                band+1,
+                0,
+                None,
+                None,
+                layer.extent(),
+                250000)
+            
+            # h = layer.dataProvider().histogram(
+            #     band + 1, 
+            #     count,
+            #     mini, 
+            #     maxi, 
+            #     layer.extent(), 
+            #     250000
+            # )
 
             histo[band + 1] = {}
-            histo[band + 1]["min"] = h.minimum
-            histo[band + 1]["max"] = h.maximum
-            histo[band + 1]["values"] = h.histogramVector
+            histo[band + 1]["min"] = hist.minimum
+            histo[band + 1]["max"] = hist.maximum
+            histo[band + 1]["values"] = hist.histogramVector
 
         out["histo"] = histo
