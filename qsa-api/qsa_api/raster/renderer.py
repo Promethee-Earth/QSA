@@ -338,8 +338,8 @@ class RasterSymbologyRenderer:
             )
             result.set_band(stats.minimumValue, stats.maximumValue)
             if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
-            self.__debug("No min/max refresh needed")
-            layer.setProperty("contrast_enhancement", "NoEnhancement")
+                self.__debug("No min/max refresh needed")
+                layer.setProperty("contrast_enhancement", "NoEnhancement")
 
             return result
 
