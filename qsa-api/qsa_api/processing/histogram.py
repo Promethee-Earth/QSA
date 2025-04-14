@@ -58,15 +58,6 @@ class Histogram:
                 layer.extent(),
                 250000)
 
-            # h = layer.dataProvider().histogram(
-            #     band + 1,
-            #     count,
-            #     mini,
-            #     maxi,
-            #     layer.extent(),
-            #     250000
-            # )
-
             histo[band + 1] = {}
             histo[band + 1]["min"] = hist.minimum
             histo[band + 1]["max"] = hist.maximum
