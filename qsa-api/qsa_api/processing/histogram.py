@@ -34,7 +34,7 @@ class Histogram:
         project = QgsProject.instance()
         project.read(project_uri)
         layer = project.mapLayersByName(layerName)[0]
-        data_provider = QgsRasterDataProvider(layer.dataProvider())
+        data_provider: QgsRasterDataProvider = layer.dataProvider()
         
         if not data_provider.isValid():
             out["histo"] = {}
