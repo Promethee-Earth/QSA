@@ -1,6 +1,7 @@
 # coding: utf8
 from multiprocessing import Manager, Process
-from qgis.core import QgsProject, QgsRectangle, QgsRasterDataProvider
+from qgis.core import QgsProject, QgsRectangle, QgsRasterDataProvider, QgsRasterBandStats
+
 
 class Histogram:
     def __init__(self, project_uri: str, layer: str) -> None:
@@ -35,28 +36,34 @@ class Histogram:
         project.read(project_uri)
         layer = project.mapLayersByName(layerName)[0]
         data_provider: QgsRasterDataProvider = layer.dataProvider()
-        
+
         if not data_provider.isValid():
             out["histo"] = {}
             return
-        
+
         histo = {}
         for band in range(layer.bandCount()):
-           
+            band_id = band + 1
+            stats = data_provider.bandStatistics(
+                band_id,
+                QgsRasterBandStats.Min | QgsRasterBandStats.Max,
+                layer.extent(),
+                250000,
+            )
             hist = data_provider.histogram(
                 band+1,
                 0,
-                None,
-                None,
+                stats.minimumValue,
+                stats.maximumValue,
                 layer.extent(),
                 250000)
-            
+
             # h = layer.dataProvider().histogram(
-            #     band + 1, 
+            #     band + 1,
             #     count,
-            #     mini, 
-            #     maxi, 
-            #     layer.extent(), 
+            #     mini,
+            #     maxi,
+            #     layer.extent(),
             #     250000
             # )
 
