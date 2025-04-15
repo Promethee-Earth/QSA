@@ -5,6 +5,9 @@ import sqlite3
 import sys
 from pathlib import Path
 
+from qgis.PyQt.QtCore import QDateTime, Qt
+from qgis.PyQt.QtGui import QColor
+from qgis._core import QgsCategorizedSymbolRenderer, QgsGraduatedSymbolRenderer, QgsSingleSymbolRenderer
 from qgis.core import (
     Qgis,
     QgsApplication,
@@ -20,7 +23,6 @@ from qgis.core import (
     QgsProject,
     QgsRasterLayer,
     QgsRasterLayerTemporalProperties,
-    QgsRasterMinMaxOrigin,
     QgsRendererCategory,
     QgsRendererRange,
     QgsSingleSymbolRenderer,
@@ -29,14 +31,11 @@ from qgis.core import (
     QgsVectorLayer,
     QgsWkbTypes,
 )
-from qgis.PyQt.QtCore import QDateTime, Qt
-from qgis.PyQt.QtGui import QColor
 
 from .mapproxy import QSAMapProxy
 from .raster import RasterOverview, RasterSymbologyRenderer
 from .utils import StorageBackend, config, logger
 from .vector import VectorSymbologyRenderer
-from .raster.min_max import MinMax
 
 RENDERER_TAG_NAME = "renderer-v2"  # constant from core/symbology/renderer.h
 
@@ -148,12 +147,12 @@ class QSAProject:
 
         return m
 
-    def cache_metadata(self) -> (dict | str):
+    def cache_metadata(self) -> tuple[dict, str]:
         if self._mapproxy_enabled:
             return QSAMapProxy(self.name).metadata(), ""
         return {}, "Cache is disabled"
 
-    def cache_reset(self) -> (bool | str):
+    def cache_reset(self) -> tuple[bool, str]:
         if self._mapproxy_enabled:
             mp = QSAMapProxy(self.name)
             rc, err = mp.read()
@@ -188,7 +187,7 @@ class QSAProject:
         con.close()
         return default_style
 
-    def style(self, name: str) -> (dict | str):
+    def style(self, name: str) -> tuple[dict, str]:
         if name not in self.styles:
             return {}, "Invalid style"
 
@@ -352,9 +351,9 @@ class QSAProject:
 
             return self.name in projects and self._qgis_projects_dir().exists()
 
-    def create(self, author: str) -> (bool | str):
+    def create(self, author: str) -> tuple[bool, str]:
         if self.exists():
-            return False
+            return False, ""
 
         # create qgis directory for qsa sqlite database and .qgs file if
         # filesystem storage based
@@ -415,7 +414,7 @@ class QSAProject:
         epsg_code: int,
         overview: bool,
         datetime: QDateTime | None,
-    ) -> (bool | str):
+    ) -> tuple[bool, str]:
         t = self._layer_type(layer_type)
         if t is None:
             return False, "Invalid layer type"
@@ -530,7 +529,7 @@ class QSAProject:
 
         return True, ""
 
-    def add_style(self, name: str, layer_type: str, symbology: dict, rendering: dict) -> (bool | str):
+    def add_style(self, name: str, layer_type: str, symbology: dict, rendering: dict) -> tuple[bool, str]:
         t = self._layer_type(layer_type)
         match t:
             case Qgis.LayerType.Vector:
@@ -542,7 +541,7 @@ class QSAProject:
             case _:
                 return False, "Invalid layer type"
 
-    def _add_style_raster(self, name: str, symbology: dict, rendering: dict) -> (bool | str):
+    def _add_style_raster(self, name: str, symbology: dict, rendering: dict) -> tuple[bool, str]:
         check = self.__safety_check(symbology)
         if not check[0]:
             return check
@@ -572,10 +571,10 @@ class QSAProject:
             path.as_posix(), categories=QgsMapLayer.AllStyleCategories)
         return True, ""
 
-    def _add_style_vector(self, name: str, symbology: dict, rendering: dict) -> (bool | str):
+    def _add_style_vector(self, name: str, symbology: dict, rendering: dict) -> tuple[bool, str]:
         check = self.__safety_check(symbology)
         if not check[0]:
-            return check
+            return check, ""
 
         render = None
         vl = QgsVectorLayer()
@@ -609,7 +608,7 @@ class QSAProject:
             return False, "`properties` is missing in `symbology`"
         return True, ""
 
-    def _create_categorized_style(self, symbology: dict) -> QgsCategorizedSymbolRenderer:
+    def _create_categorized_style(self, symbology: dict) -> QgsCategorizedSymbolRenderer | None:
         symbol = symbology["symbol"]
         properties = symbology["properties"]
         attribut = properties["attributs"]
@@ -669,8 +668,7 @@ class QSAProject:
         render = QgsCategorizedSymbolRenderer(attribut, ranges)
         return render
 
-    def _create_graduated_style(self, symbology: dict) -> QgsGraduatedSymbolRenderer:
-
+    def _create_graduated_style(self, symbology: dict) -> QgsGraduatedSymbolRenderer | None:
         symbol = symbology["symbol"]
         properties = symbology["properties"]
         attribut = properties["attributs"]
@@ -731,7 +729,7 @@ class QSAProject:
         render.setMode(QgsGraduatedSymbolRenderer.Custom)
         return render
 
-    def _create_single_symbol_style(self, symbology: dict) -> QgsSingleSymbolRenderer:
+    def _create_single_symbol_style(self, symbology: dict) -> QgsSingleSymbolRenderer | None:
 
         symbol = symbology["symbol"]
         properties = symbology["properties"]
@@ -778,7 +776,7 @@ class QSAProject:
         render = QgsSingleSymbolRenderer(symbol)
         return render
 
-    def remove_style(self, name: str) -> bool:
+    def remove_style(self, name: str) -> tuple[bool, str]:
         if name not in self.styles:
             return False, f"Style '{name}' does not exist"
 

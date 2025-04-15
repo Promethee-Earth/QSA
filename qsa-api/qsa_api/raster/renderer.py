@@ -25,33 +25,6 @@ ContrastEnhancementAlgorithm = (
     QgsContrastEnhancement.ContrastEnhancementAlgorithm)
 
 
-class RasterMultiBandStats:
-    red_band: QgsRasterBandStats
-    green_band: QgsRasterBandStats
-    blue_band: QgsRasterBandStats
-
-    def __init__(self, layer: QgsRasterLayer):
-        renderer: QgsMultiBandColorRenderer = layer.renderer()
-        self.red_band = layer.dataProvider().bandStatistics(
-            renderer.redBand(),
-            QgsRasterBandStats.Min | QgsRasterBandStats.Max,
-            layer.extent(),
-            250000,
-        )
-        self.green_band = layer.dataProvider().bandStatistics(
-            renderer.greenBand(),
-            QgsRasterBandStats.Min | QgsRasterBandStats.Max,
-            layer.extent(),
-            250000,
-        )
-        self.blue_band = layer.dataProvider().bandStatistics(
-            renderer.blueBand(),
-            QgsRasterBandStats.Min | QgsRasterBandStats.Max,
-            layer.extent(),
-            250000,
-        )
-
-
 class RasterSymbologyRenderer:
     class Color(Enum):
         GRAY = 0
@@ -375,8 +348,7 @@ class RasterSymbologyRenderer:
             case QgsRasterMinMaxOrigin.Limits.None_:
                 self.__debug("No min/max refresh needed")
                 renderer = layer.renderer()
-                result.set_band(renderer.classificationMin(),
-                                renderer.classificationMax())
+                result.set_band(renderer.classificationMin(), renderer.classificationMax())
         return result
 
     def _compute_cumulative_cut(self, layer: QgsRasterLayer, band: int = 1) -> tuple[float, float]:
@@ -523,7 +495,7 @@ class RasterSymbologyRenderer:
 
     # serializer methods ###################################################################################################
     @staticmethod
-    def style_to_json(path: Path) -> (dict | str):
+    def style_to_json(path: Path) -> tuple[dict, str]:
         tif = Path(__file__).resolve().parent / "empty.tif"
         rl = QgsRasterLayer(tif.as_posix(), "", "gdal")
         rl.loadNamedStyle(path.as_posix())
