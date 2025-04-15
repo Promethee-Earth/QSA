@@ -17,8 +17,9 @@ from qgis.core import (
     QgsSingleBandPseudoColorRenderer,
     QgsStyle,
 )
+
+from .min_max import MinMax, MultiBand, SignleBand
 from ..utils import logger
-from .min_max import MinMax, MultiBand, RasterType, SignleBand
 
 ContrastEnhancementAlgorithm = (
     QgsContrastEnhancement.ContrastEnhancementAlgorithm)
@@ -30,7 +31,7 @@ class RasterMultiBandStats:
     blue_band: QgsRasterBandStats
 
     def __init__(self, layer: QgsRasterLayer):
-        renderer = layer.renderer()
+        renderer: QgsMultiBandColorRenderer = layer.renderer()
         self.red_band = layer.dataProvider().bandStatistics(
             renderer.redBand(),
             QgsRasterBandStats.Min | QgsRasterBandStats.Max,
@@ -229,7 +230,7 @@ class RasterSymbologyRenderer:
                 layer.renderer().setBlueContrastEnhancement(ce)
 
     def _refresh_min_max_multibandcolor(self, layer: QgsRasterLayer) -> MinMax:
-        renderer = layer.renderer()
+        renderer: QgsMultiBandColorRenderer = layer.renderer()
         limits = renderer.minMaxOrigin().limits()
         red_ce = QgsContrastEnhancement(renderer.redContrastEnhancement())
         green_ce = QgsContrastEnhancement(renderer.greenContrastEnhancement())
@@ -242,15 +243,14 @@ class RasterSymbologyRenderer:
         blue_band = renderer.blueBand()
 
         result = MultiBand()
-        stats = RasterMultiBandStats(layer)
-        result.set_red_band(stats.red_band.minimumValue,
-                            stats.red_band.maximumValue)
-        result.set_green_band(stats.green_band.minimumValue,
-                                stats.green_band.maximumValue)
-        result.set_blue_band(stats.blue_band.minimumValue,
-                                stats.blue_band.maximumValue)
+        red_stat = layer.dataProvider().bandStatistics(red_band, QgsRasterBandStats.All,
+                                                       layer.extent(), 250000)
+        green_stat = layer.dataProvider().bandStatistics(green_band, QgsRasterBandStats.All,
+                                                         layer.extent(), 250000)
+        blue_stat = layer.dataProvider().bandStatistics(blue_band, QgsRasterBandStats.All,
+                                                        layer.extent(), 250000)
 
-        if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
+        if alg == ContrastEnhancementAlgorithm.NoEnhancement:
             self.__debug("No min/max refresh needed")
             layer.dataProvider().setNoDataValue(red_band, 0)
             layer.dataProvider().setNoDataValue(green_band, 0)
@@ -260,21 +260,18 @@ class RasterSymbologyRenderer:
         match limits:
             case QgsRasterMinMaxOrigin.Limits.MinMax:
                 self.__debug("compute min/max for multibandcolor")
-                
-                red_ce.setMinimumValue(stats.red_band.minimumValue)
-                red_ce.setMaximumValue(stats.red_band.maximumValue)
-                result.set_red_band(stats.red_band.minimumValue,
-                                    stats.red_band.maximumValue)
 
-                green_ce.setMinimumValue(stats.green_band.minimumValue)
-                green_ce.setMaximumValue(stats.green_band.maximumValue)
-                result.set_green_band(
-                    stats.green_band.minimumValue, stats.green_band.maximumValue)
+                red_ce.setMinimumValue(red_stat.minimumValue)
+                red_ce.setMaximumValue(red_stat.maximumValue)
+                result.set_red_band(red_stat.minimumValue, red_stat.maximumValue)
 
-                blue_ce.setMinimumValue(stats.blue_band.minimumValue)
-                blue_ce.setMaximumValue(stats.blue_band.maximumValue)
-                result.set_blue_band(
-                    stats.blue_band.minimumValue, stats.blue_band.maximumValue)
+                green_ce.setMinimumValue(green_stat.minimumValue)
+                green_ce.setMaximumValue(green_stat.maximumValue)
+                result.set_green_band(green_stat.minimumValue, green_stat.maximumValue)
+
+                blue_ce.setMinimumValue(blue_stat.minimumValue)
+                blue_ce.setMaximumValue(blue_stat.maximumValue)
+                result.set_blue_band(blue_stat.minimumValue, blue_stat.maximumValue)
 
             case QgsRasterMinMaxOrigin.Limits.CumulativeCut:
                 self.__debug("compute cumulative cut for multibandcolor")
@@ -314,17 +311,17 @@ class RasterSymbologyRenderer:
         limits = layer.renderer().minMaxOrigin().limits()
         self.__debug(f"contrast enhancement algorithm: {alg}")
         self.__debug(f"limits: {limits}")
-        
+
         result = SignleBand()
         stats = layer.dataProvider().bandStatistics(
-                1,
-                QgsRasterBandStats.Min | QgsRasterBandStats.Max,
-                layer.extent(),
-                250000,
-            )
+            1,
+            QgsRasterBandStats.Min | QgsRasterBandStats.Max,
+            layer.extent(),
+            250000,
+        )
         result.set_band(stats.minimumValue, stats.maximumValue)
 
-        if (alg == ContrastEnhancementAlgorithm.NoEnhancement):
+        if alg == ContrastEnhancementAlgorithm.NoEnhancement:
             self.__debug("No min/max refresh needed")
             layer.setProperty("contrast_enhancement", "NoEnhancement")
             return result
@@ -489,21 +486,18 @@ class RasterSymbologyRenderer:
         alg = properties["algorithm"] if properties["algorithm"] else None
         match alg:
             case "StretchToMinimumMaximum":
-                self.contrast_algorithm = (
-                    ContrastEnhancementAlgorithm.StretchToMinimumMaximum)
+                self.contrast_algorithm = ContrastEnhancementAlgorithm.StretchToMinimumMaximum
             case "NoEnhancement":
                 self.contrast_algorithm = (
                     ContrastEnhancementAlgorithm.NoEnhancement)
         limits = properties["limits_min_max"] if properties["limits_min_max"] else None
         match limits:
             case "UserDefined":
-                self.contrast_limits = (QgsRasterMinMaxOrigin.Limits.None_)
+                self.contrast_limits = QgsRasterMinMaxOrigin.Limits.None_
             case "MinMax":
-                self.contrast_limits = (
-                    QgsRasterMinMaxOrigin.Limits.MinMax)
+                self.contrast_limits = QgsRasterMinMaxOrigin.Limits.MinMax
             case "CumulativeCut":
-                self.contrast_limits = (
-                    QgsRasterMinMaxOrigin.Limits.CumulativeCut)
+                self.contrast_limits = QgsRasterMinMaxOrigin.Limits.CumulativeCut
                 self._load_cumulative_cut(properties)
         self.__debug(
             f"contrast enhancement algorithm: {self.contrast_algorithm}")
@@ -550,8 +544,8 @@ class RasterSymbologyRenderer:
                 renderer
             )
         elif (
-            renderer_type
-            == RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR
+                renderer_type
+                == RasterSymbologyRenderer.Type.SINGLE_BAND_PSEUDOCOLOR
         ):
             props = RasterSymbologyRenderer._singlebandpseudocolor_properties(
                 renderer
@@ -616,8 +610,8 @@ class RasterSymbologyRenderer:
             alg = red_ce.contrastEnhancementAlgorithm()
             props["contrast_enhancement"]["algorithm"] = "NoEnhancement"
             if (
-                alg
-                == QgsContrastEnhancement.ContrastEnhancementAlgorithm.StretchToMinimumMaximum
+                    alg
+                    == QgsContrastEnhancement.ContrastEnhancementAlgorithm.StretchToMinimumMaximum
             ):
                 props["contrast_enhancement"][
                     "algorithm"
@@ -652,8 +646,8 @@ class RasterSymbologyRenderer:
         alg = ce.contrastEnhancementAlgorithm()
         props["contrast_enhancement"]["algorithm"] = "NoEnhancement"
         if (
-            alg
-            == QgsContrastEnhancement.ContrastEnhancementAlgorithm.StretchToMinimumMaximum
+                alg
+                == QgsContrastEnhancement.ContrastEnhancementAlgorithm.StretchToMinimumMaximum
         ):
             props["contrast_enhancement"][
                 "algorithm"
