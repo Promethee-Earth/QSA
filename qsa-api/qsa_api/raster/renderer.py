@@ -255,6 +255,9 @@ class RasterSymbologyRenderer:
             layer.dataProvider().setNoDataValue(red_band, 0)
             layer.dataProvider().setNoDataValue(green_band, 0)
             layer.dataProvider().setNoDataValue(blue_band, 0)
+            result.set_red_band(red_stat.minimumValue, red_stat.maximumValue)
+            result.set_green_band(green_stat.minimumValue, green_stat.maximumValue)
+            result.set_blue_band(blue_stat.minimumValue, blue_stat.maximumValue)
             return result
 
         match limits:
