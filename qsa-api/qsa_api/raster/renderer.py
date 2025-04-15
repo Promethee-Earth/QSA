@@ -263,15 +263,15 @@ class RasterSymbologyRenderer:
 
                 red_ce.setMinimumValue(red_stat.minimumValue)
                 red_ce.setMaximumValue(red_stat.maximumValue)
-                result.set_red_band(red_stat.minimumValue, red_stat.maximumValue)
+                result.set_red_band(red_ce.minimumValue, red_ce.maximumValue)
 
                 green_ce.setMinimumValue(green_stat.minimumValue)
                 green_ce.setMaximumValue(green_stat.maximumValue)
-                result.set_green_band(green_stat.minimumValue, green_stat.maximumValue)
+                result.set_green_band(green_ce.minimumValue, green_ce.maximumValue)
 
                 blue_ce.setMinimumValue(blue_stat.minimumValue)
                 blue_ce.setMaximumValue(blue_stat.maximumValue)
-                result.set_blue_band(blue_stat.minimumValue, blue_stat.maximumValue)
+                result.set_blue_band(blue_ce.minimumValue, blue_ce.maximumValue)
 
             case QgsRasterMinMaxOrigin.Limits.CumulativeCut:
                 self.__debug("compute cumulative cut for multibandcolor")
@@ -291,12 +291,12 @@ class RasterSymbologyRenderer:
                 blue_ce.setMinimumValue(blue_min_max[0])
                 blue_ce.setMaximumValue(blue_min_max[1])
                 result.set_blue_band(blue_min_max[0], blue_min_max[1])
-            case QgsRasterMinMaxOrigin.Limits.None_:
-                self.__debug("No min/max refresh needed")
-                return result
 
             case QgsRasterMinMaxOrigin.Limits.None_:
                 self.__debug("No min/max refresh needed")
+                result.set_red_band(red_ce.minimumValue(), red_ce.maximumValue())
+                result.set_green_band(green_ce.minimumValue(), green_ce.maximumValue())
+                result.set_blue_band(blue_ce.minimumValue(), blue_ce.maximumValue())
                 return result
 
         layer.renderer().setRedContrastEnhancement(red_ce)
@@ -340,6 +340,7 @@ class RasterSymbologyRenderer:
                 result.set_band(min_max[0], min_max[1])
             case QgsRasterMinMaxOrigin.Limits.None_:
                 self.__debug("No min/max refresh needed")
+                result.set_band(ce.minimumValue(), ce.maximumValue())
                 return result
         layer.renderer().setContrastEnhancement(ce)
         return result
@@ -376,7 +377,7 @@ class RasterSymbologyRenderer:
                 self.__debug("No min/max refresh needed")
         return result
 
-    def _compute_cumulative_cut(self, layer: QgsRasterLayer, band: int = 1) -> (float | float):
+    def _compute_cumulative_cut(self, layer: QgsRasterLayer, band: int = 1) -> (float , float):
         min_max_origin = layer.renderer().minMaxOrigin()
         values = layer.dataProvider().bandStatistics(
             band,
