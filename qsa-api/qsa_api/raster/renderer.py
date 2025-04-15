@@ -263,15 +263,15 @@ class RasterSymbologyRenderer:
 
                 red_ce.setMinimumValue(red_stat.minimumValue)
                 red_ce.setMaximumValue(red_stat.maximumValue)
-                result.set_red_band(red_ce.minimumValue, red_ce.maximumValue)
+                result.set_red_band(red_ce.minimumValue(), red_ce.maximumValue())
 
                 green_ce.setMinimumValue(green_stat.minimumValue)
                 green_ce.setMaximumValue(green_stat.maximumValue)
-                result.set_green_band(green_ce.minimumValue, green_ce.maximumValue)
+                result.set_green_band(green_ce.minimumValue(), green_ce.maximumValue())
 
                 blue_ce.setMinimumValue(blue_stat.minimumValue)
                 blue_ce.setMaximumValue(blue_stat.maximumValue)
-                result.set_blue_band(blue_ce.minimumValue, blue_ce.maximumValue)
+                result.set_blue_band(blue_ce.minimumValue(), blue_ce.maximumValue())
 
             case QgsRasterMinMaxOrigin.Limits.CumulativeCut:
                 self.__debug("compute cumulative cut for multibandcolor")
