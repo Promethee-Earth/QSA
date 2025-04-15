@@ -374,6 +374,9 @@ class RasterSymbologyRenderer:
                 result.set_band(min_max[0], min_max[1])
             case QgsRasterMinMaxOrigin.Limits.None_:
                 self.__debug("No min/max refresh needed")
+                renderer = layer.renderer()
+                result.set_band(renderer.classificationMin(),
+                                renderer.classificationMax())
         return result
 
     def _compute_cumulative_cut(self, layer: QgsRasterLayer, band: int = 1) -> tuple[float, float]:
