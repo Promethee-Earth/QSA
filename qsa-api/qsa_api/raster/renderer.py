@@ -351,13 +351,12 @@ class RasterSymbologyRenderer:
     def _refresh_min_max_singlebandpseudocolor(self, layer: QgsRasterLayer) -> MinMax:
         limits = layer.renderer().minMaxOrigin().limits()
         self.__debug(f"limits: {limits}")
+
+        ce = layer.renderer().contrastEnhancement()
+        self.__debug(f"contrast enhancement: {ce}")
+
         layer.dataProvider().setNoDataValue(1, 0)
-        stats = layer.dataProvider().bandStatistics(
-            1,
-            QgsRasterBandStats.Min | QgsRasterBandStats.Max,
-            layer.extent(),
-            250000,
-        )
+        stats = layer.dataProvider().bandStatistics(1, QgsRasterBandStats.All, layer.extent(), 250000)
         result = SignleBand()
         result.set_band(stats.minimumValue, stats.maximumValue)
 
@@ -380,7 +379,7 @@ class RasterSymbologyRenderer:
                 self.__debug("No min/max refresh needed")
         return result
 
-    def _compute_cumulative_cut(self, layer: QgsRasterLayer, band: int = 1) -> (float , float):
+    def _compute_cumulative_cut(self, layer: QgsRasterLayer, band: int = 1) -> tuple[float, float]:
         min_max_origin = layer.renderer().minMaxOrigin()
         values = layer.dataProvider().bandStatistics(
             band,

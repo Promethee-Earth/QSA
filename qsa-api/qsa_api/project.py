@@ -247,7 +247,7 @@ class QSAProject:
             return infos
         return {}
 
-    def layer_update_style(self, layer_name: str, style_name: str, current: bool) -> (bool | str):
+    def layer_update_style(self, layer_name: str, style_name: str, current: bool) -> tuple[bool, str]:
         # if layer_name not in self.layers:
         #     return False, f"Layer '{layer_name}' does not exist"
 
