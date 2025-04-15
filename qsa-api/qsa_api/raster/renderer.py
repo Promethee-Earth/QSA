@@ -352,9 +352,6 @@ class RasterSymbologyRenderer:
         limits = layer.renderer().minMaxOrigin().limits()
         self.__debug(f"limits: {limits}")
 
-        ce = layer.renderer().contrastEnhancement()
-        self.__debug(f"contrast enhancement: {ce}")
-
         layer.dataProvider().setNoDataValue(1, 0)
         stats = layer.dataProvider().bandStatistics(1, QgsRasterBandStats.All, layer.extent(), 250000)
         result = SignleBand()
