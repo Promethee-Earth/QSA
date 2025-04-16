@@ -220,6 +220,8 @@ class RasterSymbologyRenderer:
 
         result = MultiBand()
         RasterBandStatistics = QgsRasterBandStats.Min | QgsRasterBandStats.Max
+        self.__debug(f"Band Statistics min: {str(type(QgsRasterBandStats.Min))}")
+        self.__debug(f"Band Statistics max: {str(type(QgsRasterBandStats.Max))}")
         self.__debug(f"Band Statistics: {str(RasterBandStatistics)}")
         red_stat = layer.dataProvider().bandStatistics(red_band, QgsRasterBandStats.Min | QgsRasterBandStats.Max,
                                                        layer.extent(), 250000)
