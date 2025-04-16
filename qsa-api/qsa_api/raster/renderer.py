@@ -16,6 +16,7 @@ from qgis.core import (
     QgsSingleBandGrayRenderer,
     QgsSingleBandPseudoColorRenderer,
     QgsStyle,
+    
 )
 
 from .min_max import MinMax, MultiBand, SignleBand
@@ -218,6 +219,8 @@ class RasterSymbologyRenderer:
         blue_band = renderer.blueBand()
 
         result = MultiBand()
+        RasterBandStatistics = QgsRasterBandStats.Min | QgsRasterBandStats.Max
+        self.__debug(f"Band Statistics: {RasterBandStatistics}")
         red_stat = layer.dataProvider().bandStatistics(red_band, QgsRasterBandStats.Min | QgsRasterBandStats.Max,
                                                        layer.extent(), 250000)
         green_stat = layer.dataProvider().bandStatistics(green_band, QgsRasterBandStats.Min | QgsRasterBandStats.Max,
