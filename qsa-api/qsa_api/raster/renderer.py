@@ -218,11 +218,11 @@ class RasterSymbologyRenderer:
         blue_band = renderer.blueBand()
 
         result = MultiBand()
-        red_stat = layer.dataProvider().bandStatistics(red_band, QgsRasterBandStats.All,
+        red_stat = layer.dataProvider().bandStatistics(red_band, QgsRasterBandStats.Min | QgsRasterBandStats.Max,
                                                        layer.extent(), 250000)
-        green_stat = layer.dataProvider().bandStatistics(green_band, QgsRasterBandStats.All,
+        green_stat = layer.dataProvider().bandStatistics(green_band, QgsRasterBandStats.Min | QgsRasterBandStats.Max,
                                                          layer.extent(), 250000)
-        blue_stat = layer.dataProvider().bandStatistics(blue_band, QgsRasterBandStats.All,
+        blue_stat = layer.dataProvider().bandStatistics(blue_band, QgsRasterBandStats.Min | QgsRasterBandStats.Max,
                                                         layer.extent(), 250000)
 
         if alg == ContrastEnhancementAlgorithm.NoEnhancement:
