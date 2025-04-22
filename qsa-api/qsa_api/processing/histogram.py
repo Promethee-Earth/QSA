@@ -62,7 +62,7 @@ class Histogram:
                 0, # 250000
             )
 
-            log.debug("[Histogram] size: %s", len(hist.histogramVector))
+            log.debug("[Histogram] band %s , histogram size: %s", band_id, len(hist.histogramVector))
 
             histo[band + 1] = {}
             histo[band + 1]["min"] = hist.minimum
