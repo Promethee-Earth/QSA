@@ -1,6 +1,8 @@
 # coding: utf8
 from multiprocessing import Manager, Process
-from qgis.core import QgsProject, QgsRectangle, QgsRasterDataProvider, QgsRasterBandStats
+from qgis.core import QgsProject, QgsRasterDataProvider, QgsRasterBandStats
+
+from ..utils import logger
 
 
 class Histogram:
@@ -8,7 +10,7 @@ class Histogram:
         self.layer = layer
         self.project_uri = project_uri
 
-    def process(self, mini, maxi, count) -> (bool | dict):
+    def process(self, mini, maxi, count) -> bool | dict:
         # Some kind of cache is bothering us because when a raster layer is
         # added on S3, we cannot open it with GDAL provider later. The
         # QgsApplication needs to be restarted... why???
@@ -31,10 +33,15 @@ class Histogram:
     def _process(
         project_uri: str, layerName: str, mini, maxi, count, out: dict
     ) -> None:
+        log = logger()
 
         project = QgsProject.instance()
         project.read(project_uri)
         layer = project.mapLayersByName(layerName)[0]
+
+        rect = layer.extent()
+        log.debug("[Histogram] extent: %s", rect.area())
+
         data_provider: QgsRasterDataProvider = layer.dataProvider()
 
         if not data_provider.isValid():
@@ -48,15 +55,27 @@ class Histogram:
                 band_id,
                 QgsRasterBandStats.Min | QgsRasterBandStats.Max,
                 layer.extent(),
-                250000,
+                250000,  # sample size, 250000 is for a 500x500 image => give the size of the histogram
             )
             hist = data_provider.histogram(
-                band+1,
+                band + 1,
                 0,
                 stats.minimumValue,
                 stats.maximumValue,
                 layer.extent(),
-                250000)
+                250000,
+            )
+            hist2 = data_provider.histogram(
+                band + 1,
+                0,
+                stats.minimumValue,
+                stats.maximumValue,
+                layer.extent(),
+                0,
+            )
+
+            log.debug("[Histogram] size: %s", len(hist.histogramVector))
+            log.debug("[Histogram2] size: %s", len(hist2.histogramVector))
 
             histo[band + 1] = {}
             histo[band + 1]["min"] = hist.minimum
