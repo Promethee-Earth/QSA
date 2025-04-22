@@ -41,8 +41,13 @@ class Histogram:
 
         rect = layer.extent()
         log.debug("[Histogram] extent: %s", rect.area())
+        log.debug("[Histogram] width: %s", rect.width())
+        log.debug("[Histogram] height: %s", rect.height())
 
         data_provider: QgsRasterDataProvider = layer.dataProvider()
+        x_size = data_provider.xSize()
+        y_size = data_provider.ySize()
+        log.debug("[Histogram] size: %s x %s", x_size, y_size)
 
         if not data_provider.isValid():
             out["histo"] = {}
@@ -63,15 +68,7 @@ class Histogram:
                 stats.minimumValue,
                 stats.maximumValue,
                 layer.extent(),
-                250000,
-            )
-            hist2 = data_provider.histogram(
-                band + 1,
-                0,
-                stats.minimumValue,
-                stats.maximumValue,
-                layer.extent(),
-                0,
+                0, # 250000
             )
 
             log.debug("[Histogram] size: %s", len(hist.histogramVector))
