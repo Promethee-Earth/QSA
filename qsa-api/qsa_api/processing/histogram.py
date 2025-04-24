@@ -59,7 +59,7 @@ class Histogram:
                 stats.minimumValue,
                 stats.maximumValue,
                 layer.extent(),
-                0, # 250000
+                250000
             )
 
             log.debug("[Histogram] band %s , histogram size: %s", band_id, len(hist.histogramVector))
